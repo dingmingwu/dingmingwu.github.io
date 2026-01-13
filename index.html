@@ -332,7 +332,7 @@
 
         // --- REPLACED Research Component from Document 1 ---
         const Research = () => (
-            <section id="research" className="py-20 bg-slate-900/50 border-t border-white/5 backdrop-blur-sm">
+            <section id="research" className="py-24 relative bg-transparent">
                 <div className="container mx-auto px-6">
                     <SectionHeader title="Research Interests" subtitle="AREAS OF FOCUS" />
                     
@@ -354,7 +354,9 @@
         );
 
         const Projects = () => (
-            <section id="projects" className="py-20 bg-slate-900/50 border-t border-white/5 backdrop-blur-sm">
+            <section id="projects" className="py-24 relative bg-transparent">
+                
+                        
                 <div className="container mx-auto px-6">
                     <SectionHeader title="Projects" subtitle="FUNDING" />
                      <div className="grid md:grid-cols-2 gap-6">
@@ -381,7 +383,7 @@
             const [tab, setTab] = useState('journals');
 
             return (
-                <section id="publications" className="py-20 bg-slate-900/50 border-t border-white/5 backdrop-blur-sm">
+                <section id="publications" className="py-24 relative bg-transparent">
                 <div className="container mx-auto px-6">
                     <SectionHeader title="Publications" subtitle="RESEARCH OUTPUT" />
                         
@@ -532,10 +534,10 @@
                                     </div>
                                 </div>
 
-                                <div className="relative group w-64 h-64 shrink-0 mx-auto lg:mx-0">
+                                <div className="relative group w-64 h-80 shrink-0 mx-auto lg:mx-0">
                                     <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/20 to-blue-600/20 rounded-2xl rotate-6 transition-transform group-hover:rotate-12 border border-white/5"></div>
                                     <div className="absolute inset-0 bg-slate-900 rounded-2xl border border-cyan-500/30 overflow-hidden backdrop-blur-sm shadow-2xl">
-                                        <img src="1df315071d7e9f90cbb2db530365e090.jpg" alt="Dingming Wu" className="w-full h-full object-cover" />
+                                        <img src="Gemini_Generated_Image_wl0v74wl0v74wl0v.png" alt="Dingming Wu" className="w-full h-full object-cover" />
                                     </div>
                                 </div>
                             </div>
@@ -552,7 +554,7 @@
                     <Projects />
 
                     {/* Patents Section (Restored to original standalone style) */}
-                    <section className="py-20 backdrop-blur-sm">
+                    <section className="py-24 relative bg-transparent">
                         <div className="container mx-auto px-6">
                             <SectionHeader title="Patents" subtitle="INTELLECTUAL PROPERTY" />
                             <div className="mt-8 grid gap-4">
@@ -566,7 +568,7 @@
                     </section>
 
                     {/* Teaching */}
-                    <section id="teaching" className="py-20 bg-slate-900/50 border-t border-white/5 backdrop-blur-sm">
+                    <section id="teaching" className="py-24 relative bg-transparent">
                         <div className="container mx-auto px-6">
                             <SectionHeader title="Teaching" subtitle="KNOWLEDGE TRANSFER" />
                             <div className="grid lg:grid-cols-2 gap-8">
@@ -594,7 +596,7 @@
                     </section>
 
                     {/* Research Team */}
-                    <section id="students" className="py-20 backdrop-blur-sm">
+                    <section id="students" className="py-24 relative bg-transparent">
                         <div className="container mx-auto px-6">
                             <SectionHeader title="Research Team" subtitle="STUDENTS & ALUMNI" />
                             
@@ -653,7 +655,7 @@
                     </section>
 
                     {/* CV / Vita Section */}
-                    <section id="cv" className="py-20 bg-slate-900/50 border-t border-white/5 backdrop-blur-sm">
+                    <section id="cv" className="py-24 relative bg-transparent">
                         <div className="container mx-auto px-6">
                             <SectionHeader title="Career" subtitle="ACADEMIC & PROFESSIONAL HISTORY" />
                             
@@ -739,7 +741,7 @@
                             </div>
                             
                             {/* Honors */}
-                            <div className="mt-16">
+                            <div className="py-24 relative bg-transparent">
                                 <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2"><Award className="text-yellow-500"/> Honors & Awards</h3>
                                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     <HonorCard title="Graduate Education Innovation Program" year="2024" desc="Principal Investigator, SZU - Shenzhen International Quantum Research Institute Joint Graduate Training Practice Base" />
