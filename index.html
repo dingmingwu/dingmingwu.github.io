@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dingming Wu - Academic Portfolio</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Phosphor Icons (Required for Document 1 Components) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Custom Styles -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #020617; /* slate-950 */
+            color: #cbd5e1; /* slate-300 */
+        }
+        
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Styles from Document 1 */
+        .glass-panel {
+            background: rgba(20, 25, 35, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 240, 255, 0.1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+        .glass-panel:hover {
+            border-color: rgba(0, 240, 255, 0.3);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.1);
+        }
+
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.5);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(71, 85, 105, 0.8);
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(6, 182, 212, 0.6);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- Data ---
+        const personalInfo = {
+            email: "dingming@szu.edu.cn",
+            phone: "(86) 18575506507",
+            address: "Room 618, Zhi Teng Building, College of CS & SE, Shenzhen University"
+        };
+
+        const researchInterestsData = [
+            { id: 1, title: "Large Graph Analytics", icon: "graph", desc: "I design efficient algorithms for large-scale and streaming graphs, focusing on real-time structural analysis and scalable graph approximation." },
+            { id: 2, title: "Spatio-Temporal & Geo-Social Intelligence", icon: "globe", desc: "My research involves extracting localized patterns from complex spatial and temporal data, develops frameworks for spatial tensor mining, semantic place retrieval, and geo-social clustering to identify density-based patterns and optimize social search and recommendations." },
+            { id: 3, title: "Machine Learning in Business and Industry 4.0", icon: "factory", desc: "I develop predictive models and optimization algorithms to enhance operational efficiency and adaptability in smart manufacturing, and data-driven market analysis for client prediction and strategic planning." },
+            { id: 4, title: "Medical Image Analysis", icon: "brain", desc: "I utilize deep learning to analyze multi-modal medical imaging (e.g., MRI and CT, building models for segmentation, in-painting, and computer-aided diagnosis)." }
+        ];
+
+        const publicationsData = {
+            journals: [
+                { id: "J1", title: "GREAT: Generalized Reservoir Sampling based Triangle Counting Estimation over Streaming Graphs", venue: "Proc. VLDB Endow. 18(7)", year: "2025", authors: "Siyue Wu, Dingming Wu, Sinhong Cheuk, Tsz Nam Chan, Kezhong Lu" },
+                { id: "J2", title: "Efficient and Accurate PageRank Approximation on Large Graphs", venue: "Proc. ACM Manag. Data 2(4)", year: "2024", authors: "Siyue Wu, Dingming Wu, Junyi Quan, Tsz Nam Chan, Kezhong Lu" },
+                { id: "J3", title: "LION: Fast and High-Resolution Network Kernel Density Visualization", venue: "Proc. VLDB Endow. 17(6)", year: "2024", authors: "Tsz Nam Chan, Rui Zang, Bojian Zhu, Leong Hou U, Dingming Wu, Jianliang Xu" },
+                { id: "J4", title: "LARGE: A Length-Aggregation-based Grid Structure for Line Density Visualization", venue: "Proc. VLDB Endow. 17(13)", year: "2024", authors: "Tsz Nam Chan, Bojian Zhu, Dingming Wu, Yun Peng, Leong Hou U" },
+                { id: "J5", title: "Efficient Skyline Keyword-Based Tree Retrieval on Attributed Graphs", venue: "IEEE Trans. Knowl. Data Eng. 36(11)", year: "2024", authors: "Dingming Wu, Zhaofen Zhang, Christian S. Jensen, Kezhong Lu" },
+                { id: "J6", title: "Efficient Retrieval of the Top-k Most Relevant Event-Partner Pairs", venue: "IEEE Trans. Knowl. Data Eng. 35(3)", year: "2023", authors: "Dingming Wu, Erjia Xiao, Yi Zhu, Christian S. Jensen, Kezhong Lu" },
+                { id: "J7", title: "Density-Based Top-K Spatial Textual Clusters Retrieval", venue: "IEEE Trans. Knowl. Data Eng. 34(11)", year: "2022", authors: "Dingming Wu, Ilkcan Keles, Song Wu, Hao Zhou, Simonas Saltenis, Christian S. Jensen, Kezhong Lu" },
+                { id: "J8", title: "Top-k relevant semantic place retrieval on spatiotemporal RDF data", venue: "VLDB J. 29(4)", year: "2020", authors: "Dingming Wu, Hao Zhou, Jieming Shi, Nikos Mamoulis" },
+                { id: "J9", title: "Density-Based Place Clustering Using Geo-Social Network Data", venue: "IEEE Trans. Knowl. Data Eng. 30(5)", year: "2018", authors: "Dingming Wu, Jieming Shi, Nikos Mamoulis" },
+                { id: "J10", title: "Location Aware Keyword Query Suggestion Based on Document Proximity", venue: "IEEE Trans. Knowl. Data Eng. 28(1)", year: "2016", authors: "Shuyao Qi, Dingming Wu, Nikos Mamoulis" },
+                { id: "J11", title: "Clustering in Geo-Social Networks", venue: "IEEE Data Eng. Bull. 38(2)", year: "2015", authors: "Dingming Wu, Nikos Mamoulis, Jieming Shi" },
+                { id: "J12", title: "Authentication of Moving Top-k Spatial Keyword Queries", venue: "IEEE Trans. Knowl. Data Eng. 27(4)", year: "2015", authors: "Dingming Wu, Byron Choi, Jianliang Xu, Christian S. Jensen" },
+                { id: "J13", title: "Spatial-aware interest group queries in location-based social networks", venue: "Data Knowl. Eng. 92", year: "2014", authors: "Yafei Li, Dingming Wu, Jianliang Xu, Byron Choi, Weifeng Su" },
+                { id: "J14", title: "Spatial Keyword Query Processing: An Experimental Evaluation", venue: "Proc. VLDB Endow. 6(3)", year: "2013", authors: "Lisi Chen, Gao Cong, Christian S. Jensen, Dingming Wu" },
+                { id: "J15", title: "Moving spatial keyword queries: Formulation, methods, and analysis", venue: "ACM Trans. Database Syst. 38(1)", year: "2013", authors: "Dingming Wu, Man Lung Yiu, Christian S. Jensen" },
+                { id: "J16", title: "SWORS: A System for the Efficient Retrieval of Relevant Spatial Web Objects", venue: "Proc. VLDB Endow. 5(12)", year: "2012", authors: "Xin Cao, Gao Cong, Christian S. Jensen, Jun Jie Ng, Beng Chin Ooi, Nhan-Tue Phan, Dingming Wu" },
+                { id: "J17", title: "Joint Top-K Spatial Keyword Query Processing", venue: "IEEE Trans. Knowl. Data Eng. 24(10)", year: "2012", authors: "Dingming Wu, Man Lung Yiu, Gao Cong, Christian S. Jensen" },
+                { id: "J18", title: "A framework for efficient spatial web object retrieval", venue: "VLDB J. 21(6)", year: "2012", authors: "Dingming Wu, Gao Cong, Christian S. Jensen" },
+                { id: "J19", title: "Efficient Retrieval of the Top-k Most Relevant Spatial Web Objects", venue: "Proc. VLDB Endow. 2(1)", year: "2009", authors: "Gao Cong, Christian S. Jensen, Dingming Wu" }
+            ],
+            conferences: [
+                { id: "C1", title: "Large-Scale Spatiotemporal Kernel Density Visualization", venue: "ICDE 2025", year: "2025", authors: "Tsz Nam Chan, Pak Lon Ip, Bojian Zhu, Leong Hou U, Dingming Wu, Jianliang Xu, Christian S. Jensen" },
+                { id: "C2", title: "Spatially Compact Dense Block Mining in Spatial Tensors", venue: "KDD 2025", year: "2025", authors: "Weike Tang, Dingming Wu, Tsz Nam Chan, Kezhong Lu" },
+                { id: "C3", title: "A Fast Line Density Visualization Plugin for Geographic Information Systems", venue: "SIGMOD 2025 (Companion)", year: "2025", authors: "Tsz Nam Chan, Bojian Zhu, Dingming Wu, Yun Peng, Leong Hou U, Wei Tu, Ruisheng Wang" },
+                { id: "C4", title: "A Re-evaluation of Deep Learning Methods for Attributed Graph Clustering", venue: "CIKM 2023", year: "2023", authors: "Xinying Lai, Dingming Wu, Christian S. Jensen, Kezhong Lu" },
+                { id: "C5", title: "Semantic Region Retrieval from Spatial RDF Data", venue: "DASFAA 2020", year: "2020", authors: "Dingming Wu, Can Hou, Erjia Xiao, Christian S. Jensen" },
+                { id: "C6", title: "Efficiently Mining Maximal Diverse Frequent Itemsets", venue: "DASFAA 2019", year: "2019", authors: "Dingming Wu, Dexin Luo, Christian S. Jensen, Joshua Zhexue Huang" },
+                { id: "C7", title: "In Good Company: Efficient Retrieval of the Top-k Most Relevant Event-Partner Pairs", venue: "DASFAA 2019", year: "2019", authors: "Dingming Wu, Yi Zhu, Christian S. Jensen" },
+                { id: "C8", title: "Textually Relevant Spatial Skylines", venue: "IEEE Trans. Knowl. Data Eng. (TKDE) 28(1)", year: "2016", authors: "Jieming Shi, Dingming Wu, Nikos Mamoulis" },
+                { id: "C9", title: "A Density-Based Approach to the Retrieval of Top-K Spatial Textual Clusters", venue: "CIKM 2016", year: "2016", authors: "Dingming Wu, Christian S. Jensen" },
+                { id: "C10", title: "Top-k Relevant Semantic Place Retrieval on Spatial RDF Data", venue: "SIGMOD 2016", year: "2016", authors: "Jieming Shi, Dingming Wu, Nikos Mamoulis" },
+                { id: "C11", title: "Overlapping Community Regularization for Rating Prediction in Social Recommender Systems", venue: "RecSys 2015", year: "2015", authors: "Hui Li, Dingming Wu, Wenbin Tang, Nikos Mamoulis" },
+                { id: "C12", title: "Efficient Top-k Subscription Matching for Location-Aware Publish/Subscribe", venue: "SSTD 2015", year: "2015", authors: "Jiafeng Hu, Reynold Cheng, Dingming Wu, Beihong Jin" },
+                { id: "C13", title: "Social-Aware Top-k Spatial Keyword Search", venue: "MDM 2014", year: "2014", authors: "Dingming Wu, Yafei Li, Byron Choi, Jianliang Xu" },
+                { id: "C14", title: "A revisit to social network-based recommender systems", venue: "SIGIR 2014", year: "2014", authors: "Hui Li, Dingming Wu, Nikos Mamoulis" },
+                { id: "C15", title: "Density-based place clustering in geo-social networks", venue: "SIGMOD 2014", year: "2014", authors: "Jieming Shi, Nikos Mamoulis, Dingming Wu, David W. Cheung" },
+                { id: "C16", title: "Spatial-aware interest group queries in location-based social networks", venue: "CIKM 2012", year: "2012", authors: "Yafei Li, Dingming Wu, Jianliang Xu, Byron Choi, Weifeng Su" },
+                { id: "C17", title: "Efficient continuously moving top-k spatial keyword query processing", venue: "ICDE 2011", year: "2011", authors: "Dingming Wu, Man Lung Yiu, Christian S. Jensen, Gao Cong" }
+            ]
+        };
+
+        const booksData = [
+            { title: "Mastering the Academic Writing Mindset: A Guide to Crafting Computer Science Papers", publisher: "Springer Nature", year: "2026", authors: "Tsz Nam Chan, Dingming Wu" },
+            { title: "Algorithm Design and Analysis: Practical Case Studies", publisher: "Tsinghua University Press", year: "2025", authors: "Xuan Yang, Yanran Li, Dingming Wu" },
+            { title: "Algorithm Design and Analysis", publisher: "Tsinghua University Press", year: "2025", authors: "Wenfeng Du, Xuan Yang, Gang Liu, Dingming Wu" }
+        ];
+
+        // --- New Data from Document 1 ---
+        const projectsData = [
+            { title: "Multi-Sample Distributed Computing for Large-Scale Graph Data Analysis", agency: "NSFC General Program", code: "62372308", amount: "RMB 500,000", period: "2024-2027", role: "Principal Investigator" },
+            { title: "Key Technologies for Graph Embedding Representation Learning", agency: "Guangdong Basic & Applied Basic Research", code: "2023A1515011619", amount: "RMB 100,000", period: "2023-2025", role: "Principal Investigator" },
+            { title: "Key Technologies for Customs Officers' Enforcement Profiling", agency: "General Administration of Customs", code: "", amount: "RMB 300,000", period: "2022-2023", role: "Principal Investigator" },
+            { title: "Event-Based 'Activity-Partner' Retrieval on Social Networks", agency: "Shenzhen Stable Support Program", code: "20200806102941001", amount: "RMB 300,000", period: "2021-2022", role: "Principal Investigator" },
+            { title: "Development Trends of Computing Industry Innovation Ecosystem", agency: "Chinese Academy of Sciences", code: "2020-ZW04-A-014", amount: "RMB 600,000", period: "2020-2021", role: "Principal Investigator" },
+            { title: "Semantic Location Retrieval Techniques over Spatio-Temporal RDF Data", agency: "Guangdong Basic Research", code: "2019A1515011721", amount: "RMB 100,000", period: "2019-2022", role: "Principal Investigator" },
+            { title: "Location-Aware Network Information Retrieval and Recommendation", agency: "NSFC Young Scientists Fund", code: "61502310", amount: "RMB 240,000", period: "2016-2018", role: "Principal Investigator" },
+            { title: "SZU - Tefa Information Industrial IoT Big Data AI Joint Research", agency: "Shenzhen Tefa Information", code: "JCYJ20220818100205012", amount: "RMB 3M", period: "2024-2027", role: "Co-Investigator" },
+            { title: "Supervision and Inspection Management Subsystem (Phase III)", agency: "Shenzhen Customs", code: "", amount: "RMB 1.78M", period: "2023-2025", role: "Co-Investigator" },
+            { title: "Supervision and Inspection Management Subsystem (Phase II)", agency: "Shenzhen Customs", code: "", amount: "RMB 1.21M", period: "2022-2023", role: "Co-Investigator" },
+            { title: "Cross-Domain Big Data Complexity Theory and Distributed Algorithms", agency: "Shenzhen Sci-Tech Innovation", code: "JCYJ20220818100205012", amount: "RMB 2M", period: "2022-2025", role: "Co-Investigator" },
+            { title: "Commissioned Training by China Telecom Sichuan Company", agency: "China Telecom", code: "", amount: "RMB 4.83M", period: "2018-2020", role: "Co-Investigator" }
+        ];
+
+        // --- Updated Student Data with Years ---
+        const studentData = {
+            phd: [
+                { name: "Jian Lin", year: "2026-current" },
+                { name: "Zixu Xiong", year: "2025-current" },
+                { name: "Anastasiia Garanina", year: "2025-current" },
+                { name: "Siyue Wu", year: "2022-current" },
+            ],
+            master: [
+                { name: "Haonan Zhang", year: "2025-current" },
+                { name: "Xunan Wei", year: "2025-current" },
+                { name: "Mingshen Liao", year: "2024-current" },
+                { name: "Yihua Huang", year: "2024-current" },
+                { name: "Kexin Li", year: "2024-current" },
+                { name: "Yiwen Luo", year: "2024-current" },
+                { name: "Yang Liu", year: "2023-current" },
+                { name: "Shuangyi Huang", year: "2023-current" },
+                { name: "Kaitao Wang", year: "2023-current" },
+                { name: "Guowei Xiong", year: "2023-current" },
+                { name: "Haozhao Wu", year: "2023-current" },
+            ],
+            alumni: [
+                { name: "Weike Tang", dest: "Tencent", year: "2022-2025" },
+                { name: "Junyi Quan", dest: "Tencent", year: "2022-2025" },
+                { name: "Xianhong Zhuo", dest: "PING AN BANK", year: "2022-2025" },
+                { name: "Jingyan Huang", dest: "Midea Group", year: "2022-2025" },
+                { name: "Xinying Lai", dest: "Huawei", year: "2021-2024" },
+                { name: "Zhaofen Zhang", dest: "SANDSTONE", year: "2021-2024" },
+                { name: "Chujie Yuan", dest: "ByteDance", year: "2021-2024" },
+                { name: "Huabin Lv", dest: "9Realms", year: "2021-2024" },
+                { name: "Sitong Zhu", dest: "Guangzhou Taxation Bureau", year: "2021-2024" },
+                { name: "Mi Li", dest: "CMB Network Technology", year: "2020-2023" },
+                { name: "Yuqi Zhou", dest: "Shenzhen Social Insurance", year: "2020-2023" },
+                { name: "Yixin Wu", dest: "China Life", year: "2020-2023" },
+                { name: "Guoliang Du", dest: "Guangzhou Kaimei Tech", year: "2020-2023" },
+                { name: "Junjie Lin", dest: "CMB Network Technology", year: "2019-2022" },
+                { name: "Jinying Zhan", dest: "Huawei", year: "2019-2022" },
+                { name: "Song Wu", dest: "PhD @ Utrecht Univ", year: "2019-2022" },
+                { name: "Meng Chen", dest: "MedBot", year: "2019-2022" },
+                { name: "Xinchen Li", dest: "PhD @ Shenzhen Univ", year: "2018-2021" },
+                { name: "Hao Zhou", dest: "Huawei", year: "2017-2020" },
+                { name: "Can Hou", dest: "CCBFintech", year: "2017-2020" },
+                { name: "Dexin Luo", dest: "Tencent", year: "2016-2019" },
+                { name: "Yi Zhu", dest: "ByteDance", year: "2016-2019" },
+            ]
+        };
+
+        // --- Icon Components ---
+        const IconWrapper = ({ children, size = 24, className = "" }) => (
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width={size} 
+                height={size} 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                className={className}
+            >
+                {children}
+            </svg>
+        );
+
+        const Terminal = (props) => <IconWrapper {...props}><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></IconWrapper>;
+        const Cpu = (props) => <IconWrapper {...props}><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></IconWrapper>;
+        const Book = (props) => <IconWrapper {...props}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></IconWrapper>;
+        const Layers = (props) => <IconWrapper {...props}><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></IconWrapper>;
+        const Users = (props) => <IconWrapper {...props}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></IconWrapper>;
+        const User = (props) => <IconWrapper {...props}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></IconWrapper>;
+        const Code = (props) => <IconWrapper {...props}><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></IconWrapper>;
+        const Mail = (props) => <IconWrapper {...props}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></IconWrapper>;
+        const Globe = (props) => <IconWrapper {...props}><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></IconWrapper>;
+        const MapPin = (props) => <IconWrapper {...props}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></IconWrapper>;
+        const Phone = (props) => <IconWrapper {...props}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></IconWrapper>;
+        const Activity = (props) => <IconWrapper {...props}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></IconWrapper>;
+        const Network = (props) => <IconWrapper {...props}><rect x="16" y="16" width="6" height="6" rx="1" ry="1"></rect><rect x="2" y="16" width="6" height="6" rx="1" ry="1"></rect><rect x="9" y="2" width="6" height="6" rx="1" ry="1"></rect><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"></path><path d="M12 12V8"></path></IconWrapper>;
+        const BookOpen = (props) => <IconWrapper {...props}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></IconWrapper>;
+        const Shield = (props) => <IconWrapper {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></IconWrapper>;
+        const Database = (props) => <IconWrapper {...props}><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></IconWrapper>;
+        const ChevronRight = (props) => <IconWrapper {...props}><polyline points="9 18 15 12 9 6"></polyline></IconWrapper>;
+        const Award = (props) => <IconWrapper {...props}><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></IconWrapper>;
+        const PenTool = (props) => <IconWrapper {...props}><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></IconWrapper>;
+
+
+        // --- Animated Background ---
+        const BackgroundCanvas = () => {
+            const canvasRef = useRef(null);
+
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                let width, height;
+                let particles = [];
+                let animationFrameId;
+
+                const resize = () => {
+                    width = canvas.width = window.innerWidth;
+                    height = canvas.height = window.innerHeight;
+                };
+
+                class Particle {
+                    constructor() {
+                        this.x = Math.random() * width;
+                        this.y = Math.random() * height;
+                        this.vx = (Math.random() - 0.5) * 0.3;
+                        this.vy = (Math.random() - 0.5) * 0.3;
+                        this.size = Math.random() * 2 + 1;
+                    }
+                    update() {
+                        this.x += this.vx;
+                        this.y += this.vy;
+                        if (this.x < 0 || this.x > width) this.vx *= -1;
+                        if (this.y < 0 || this.y > height) this.vy *= -1;
+                    }
+                    draw() {
+                        ctx.fillStyle = 'rgba(6, 182, 212, 0.5)'; // cyan-500
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+
+                const init = () => {
+                    particles = [];
+                    const particleCount = Math.min(window.innerWidth / 15, 80);
+                    for (let i = 0; i < particleCount; i++) {
+                        particles.push(new Particle());
+                    }
+                };
+
+                const animate = () => {
+                    ctx.clearRect(0, 0, width, height);
+                    
+                    ctx.lineWidth = 0.5;
+                    for (let i = 0; i < particles.length; i++) {
+                        for (let j = i + 1; j < particles.length; j++) {
+                            const dx = particles[i].x - particles[j].x;
+                            const dy = particles[i].y - particles[j].y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < 120) {
+                                ctx.strokeStyle = `rgba(6, 182, 212, ${1 - dist / 120})`;
+                                ctx.beginPath();
+                                ctx.moveTo(particles[i].x, particles[i].y);
+                                ctx.lineTo(particles[j].x, particles[j].y);
+                                ctx.stroke();
+                            }
+                        }
+                        particles[i].update();
+                        particles[i].draw();
+                    }
+                    animationFrameId = requestAnimationFrame(animate);
+                };
+
+                window.addEventListener('resize', () => {
+                    resize();
+                    init();
+                });
+                
+                resize();
+                init();
+                animate();
+
+                return () => {
+                    window.removeEventListener('resize', resize);
+                    cancelAnimationFrame(animationFrameId);
+                };
+            }, []);
+
+            return <canvas ref={canvasRef} className="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none" />;
+        };
+
+        // --- Component from Document 1 ---
+        const SectionTitle = ({ title, sub }) => (
+            <div className="mb-12">
+                <div className="text-cyan-500 font-mono text-xs tracking-widest mb-2">{sub}</div>
+                <h2 className="text-3xl md:text-4xl font-bold text-white relative inline-block">
+                    {title}
+                    <div className="absolute -bottom-2 left-0 w-1/3 h-1 bg-cyan-500"></div>
+                </h2>
+            </div>
+        );
+
+        // --- REPLACED Research Component from Document 1 ---
+        const Research = () => (
+            <section id="research" className="py-20 bg-slate-900/50 border-t border-white/5 backdrop-blur-sm">
+                <div className="container mx-auto px-6">
+                    <SectionHeader title="Research Interests" subtitle="AREAS OF FOCUS" />
+                    
+                    <div className="grid md:grid-cols-2 gap-6">
+                        {researchInterestsData.map((item) => (
+                            <div key={item.id} className="glass-panel p-6 rounded-xl hover:-translate-y-2 transition-transform duration-300 group">
+                                <div className="flex items-center gap-4 mb-3">
+                                    <div className="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center group-hover:bg-cyan-500/20 transition-colors">
+                                        <i className={`ph-fill ph-${item.icon} text-xl text-cyan-400`}></i>
+                                    </div>
+                                    <h3 className="text-lg font-bold text-white leading-tight">{item.title}</h3>
+                                </div>
+                                <p className="text-sm text-gray-400 leading-relaxed text-justify">{item.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+        );
+
+        const Projects = () => (
+            <section id="projects" className="py-20 bg-slate-900/50 border-t border-white/5 backdrop-blur-sm">
+                <div className="container mx-auto px-6">
+                    <SectionHeader title="Projects" subtitle="FUNDING" />
+                     <div className="grid md:grid-cols-2 gap-6">
+                        {projectsData.map((proj, idx) => (
+                            <div key={idx} className="glass-panel p-6 rounded-xl relative overflow-hidden flex flex-col hover:bg-white/5 transition-colors">
+                                <div className="flex justify-between items-start mb-4">
+                                    <span className={`text-xs font-mono px-2 py-1 rounded ${proj.role === 'Principal Investigator' ? 'bg-cyan-500/20 text-cyan-300' : 'bg-purple-500/20 text-purple-300'}`}>
+                                        {proj.role}
+                                    </span>
+                                    <span className="text-xs text-gray-500 font-mono">{proj.period}</span>
+                                </div>
+                                <h3 className="text-lg font-bold text-white mb-2">{proj.title}</h3>
+                                <p className="text-sm text-gray-400 mb-1"><span className="text-gray-500">Agency:</span> {proj.agency}</p>
+                                {proj.code && <p className="text-xs text-gray-500 font-mono mb-1">Code: {proj.code}</p>}
+                                <p className="text-xs text-cyan-500/70 font-mono mt-auto">{proj.amount}</p>
+                            </div>
+                        ))}
+                     </div>
+                </div>
+            </section>
+        );
+
+        const Publications = () => {
+            const [tab, setTab] = useState('journals');
+
+            return (
+                <section id="publications" className="py-20 bg-slate-900/50 border-t border-white/5 backdrop-blur-sm">
+                <div className="container mx-auto px-6">
+                    <SectionHeader title="Publications" subtitle="RESEARCH OUTPUT" />
+                        
+                        <div className="flex gap-4 mb-8">
+                            <button onClick={() => setTab('journals')} className={`px-4 py-2 rounded text-sm font-bold transition-all ${tab === 'journals' ? 'bg-cyan-500 text-black' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}>
+                                Journal Papers ({publicationsData.journals.length})
+                            </button>
+                            <button onClick={() => setTab('conferences')} className={`px-4 py-2 rounded text-sm font-bold transition-all ${tab === 'conferences' ? 'bg-cyan-500 text-black' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}>
+                                Conference Papers ({publicationsData.conferences.length})
+                            </button>
+                            <button onClick={() => setTab('books')} className={`px-4 py-2 rounded text-sm font-bold transition-all ${tab === 'books' ? 'bg-cyan-500 text-black' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}>
+                                Books ({booksData.length})
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            {tab === 'journals' && publicationsData.journals.map((pub, idx) => (
+                                <div key={idx} className="glass-panel p-6 rounded-lg group hover:border-cyan-500/30 transition-all">
+                                    <div className="flex justify-between items-start gap-4">
+                                        <div>
+                                            <div className="text-xs font-mono text-cyan-400 mb-1">[{pub.id}] {pub.venue}, {pub.year}</div>
+                                            <h3 className="text-lg font-semibold text-gray-100 mb-2">{pub.title}</h3>
+                                            <p className="text-sm text-gray-400 font-light" dangerouslySetInnerHTML={{ __html: pub.authors.replace('Dingming Wu', '<b class="text-white">Dingming Wu</b>') }}></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {tab === 'conferences' && publicationsData.conferences.map((pub, idx) => (
+                                <div key={idx} className="glass-panel p-6 rounded-lg group hover:border-cyan-500/30 transition-all">
+                                    <div className="flex justify-between items-start gap-4">
+                                        <div>
+                                            <div className="text-xs font-mono text-cyan-400 mb-1">[{pub.id}] {pub.venue}, {pub.year}</div>
+                                            <h3 className="text-lg font-semibold text-gray-100 mb-2">{pub.title}</h3>
+                                            <p className="text-sm text-gray-400 font-light" dangerouslySetInnerHTML={{ __html: pub.authors.replace('Dingming Wu', '<b class="text-white">Dingming Wu</b>') }}></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {tab === 'books' && booksData.map((book, idx) => (
+                                <div key={idx} className="glass-panel p-6 rounded-lg group hover:border-cyan-500/30 transition-all border-l-4 border-l-purple-500">
+                                    <h3 className="text-lg font-bold text-white mb-2">{book.title}</h3>
+                                    <div className="text-sm text-purple-400 font-mono mb-2">{book.publisher}, {book.year}</div>
+                                    <p className="text-sm text-gray-400" dangerouslySetInnerHTML={{ __html: book.authors.replace('Dingming Wu', '<b class="text-white">Dingming Wu</b>') }}></p>
+                                </div>
+                            ))}
+                        </div>
+                         
+                        <div className="mt-8 text-center">
+                            <a href="https://dblp.org/pid/81/6181.html" target="_blank" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-cyan-400 transition-colors border-b border-transparent hover:border-cyan-400 pb-1">
+                                View Full List on DBLP <i className="ph-bold ph-arrow-up-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        // --- Main App Component ---
+        const Portfolio = () => {
+            const [activeSection, setActiveSection] = useState('home');
+            const [scrolled, setScrolled] = useState(false);
+
+            useEffect(() => {
+                const handleScroll = () => {
+                    setScrolled(window.scrollY > 50);
+                };
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            const navItems = [
+                { id: 'home', label: '// HOME', icon: <Terminal size={16} /> },
+                { id: 'research', label: 'RESEARCH', icon: <Cpu size={16} /> },
+                { id: 'publications', label: 'PUBS', icon: <Book size={16} /> },
+                { id: 'projects', label: 'PROJECTS', icon: <Layers size={16} /> },
+                { id: 'teaching', label: 'TEACHING', icon: <Users size={16} /> },
+                { id: 'cv', label: 'VITA', icon: <User size={16} /> },
+            ];
+
+            const scrollToSection = (id) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                    setActiveSection(id);
+                }
+            };
+
+            return (
+                <div className="min-h-screen font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
+                    
+                    <BackgroundCanvas />
+
+                    {/* Navigation */}
+                    <nav className={`fixed top-0 w-full z-50 transition-all duration-300 border-b border-white/5 backdrop-blur-md ${scrolled ? 'bg-slate-950/80 py-4' : 'bg-transparent py-6'}`}>
+                        <div className="container mx-auto px-6 flex justify-between items-center">
+                            <div className="flex items-center gap-2 cursor-pointer" onClick={() => scrollToSection('home')}>
+                                <div className="w-8 h-8 bg-cyan-500/20 rounded flex items-center justify-center text-cyan-400">
+                                    <Code size={20} />
+                                </div>
+                                <span className="font-mono font-bold text-xl tracking-tighter text-white">
+                                    WU
+                                </span>
+                            </div>
+                            
+                            <div className="hidden lg:flex gap-8">
+                                {navItems.map((item) => (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => scrollToSection(item.id)}
+                                        className={`flex items-center gap-2 text-sm font-mono tracking-wide transition-colors ${
+                                            activeSection === item.id ? 'text-cyan-400' : 'text-slate-400 hover:text-white'
+                                        }`}
+                                    >
+                                        {item.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </nav>
+
+                    {/* Hero Section */}
+                    <section id="home" className="relative pt-32 pb-20 min-h-screen flex items-center">
+                        <div className="container mx-auto px-6 relative z-10">
+                            <div className="flex flex-col lg:flex-row gap-12 items-center">
+                                <div className="flex-1 space-y-6">
+                                    
+                                    
+                                    <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight">
+                                        Dingming <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Wu</span>
+                                    </h1>
+                                    
+                                    <p className="text-xl md:text-2xl text-slate-400 font-light">
+                                        Associate Professor at <span className="text-cyan-300">Shenzhen University</span>
+                                    </p>
+                                    
+                                    <div className="text-slate-400 max-w-2xl leading-relaxed">
+                                        Advancing the frontiers of Machine Learning, Large Graph Analytics, and Spatio-Temporal Intelligence. 
+                                        Focusing on challenges in manufacturing, healthcare, and networked environments.
+                                    </div>
+
+                                    <div className="flex flex-wrap gap-4 pt-4">
+                                        <ContactBadge icon={<Mail size={14} />} text="dingming@szu.edu.cn" href="mailto:dingming@szu.edu.cn" />
+                                        
+                                        <ContactBadge icon={<MapPin size={14} />} text="Shenzhen, China" />
+                                        <ContactBadge icon={<Phone size={14} />} text="(86) 18575506507" />
+                                    </div>
+                                </div>
+
+                                <div className="relative group w-64 h-64 shrink-0 mx-auto lg:mx-0">
+                                    <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/20 to-blue-600/20 rounded-2xl rotate-6 transition-transform group-hover:rotate-12 border border-white/5"></div>
+                                    <div className="absolute inset-0 bg-slate-900 rounded-2xl border border-cyan-500/30 overflow-hidden backdrop-blur-sm shadow-2xl">
+                                        <img src="1df315071d7e9f90cbb2db530365e090.jpg" alt="Dingming Wu" className="w-full h-full object-cover" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* REPLACED SECTION: Research Interests from Document 1 */}
+                    <Research />
+
+                    {/* REPLACED SECTION: Publications from Document 1 */}
+                    <Publications />
+
+                    {/* REPLACED SECTION: Projects from Document 1 */}
+                    <Projects />
+
+                    {/* Patents Section (Restored to original standalone style) */}
+                    <section className="py-20 backdrop-blur-sm">
+                        <div className="container mx-auto px-6">
+                            <SectionHeader title="Patents" subtitle="INTELLECTUAL PROPERTY" />
+                            <div className="mt-8 grid gap-4">
+                                <PatentItem id="ZL 202310430972.3" title="A Frequent Subgraph Mining Method and Terminal Device" date="Nov 28, 2023" authors="Zhang Zhaofen; Wu Dingming; Wu Yixin; Lu Kezhong; Huang Zhexue" />
+                                <PatentItem id="ZL 202111472336.4" title="Knowledge Graph Embedding Model Training Method, Device, Electronic Equipment, and Medium" date="May 20, 2022" authors="Wu Dingming; Zhou Yuqi; Lu Kezhong; Zhan Jinke" />
+                                <PatentItem id="ZL 202210026117.1" title="Skyline Position Node Query Method, Device, and Equipment in RDF Data" date="May 17, 2022" authors="Wu Dingming; Zhang Zhaofen; Lu Kezhong" />
+                                <PatentItem id="ZL 201810294059.4" title="An Activity-and-Partner Retrieval Method and System" date="Aug 6, 2021" authors="Wu Dingming; Zhu Yi; Huang Zhexue" />
+                                <PatentItem id="ZL 201710821358.4" title="Mining Method and Device for Maximum Diverse Frequent Patterns Based on Classification Trees" date="Dec 4, 2020" authors="Wu Dingming; Luo Dexin; Huang Zhexue" />
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Teaching */}
+                    <section id="teaching" className="py-20 bg-slate-900/50 border-t border-white/5 backdrop-blur-sm">
+                        <div className="container mx-auto px-6">
+                            <SectionHeader title="Teaching" subtitle="KNOWLEDGE TRANSFER" />
+                            <div className="grid lg:grid-cols-2 gap-8">
+                                <div className="bg-slate-950/80 p-6 rounded-xl border border-white/5">
+                                    <h4 className="text-cyan-400 font-mono mb-4 text-sm tracking-wider">COURSES</h4>
+                                    <ul className="space-y-3">
+                                        <CourseItem name="Algorithm Design and Analysis" year="2016-2025" />
+                                        <CourseItem name="Data Structures" year="2019-2024" />
+                                        <CourseItem name="Thesis Writing Guidance (PhD Course)" year="2024-2025" />
+                                        <CourseItem name="Professional English (PhD Course)" year="2021-2022" />
+                                        <CourseItem name="Big Data Processing and Analysis" year="2019" />
+                                    </ul>
+                                </div>
+                                <div className="bg-slate-950/80 p-6 rounded-xl border border-white/5">
+                                    <h4 className="text-cyan-400 font-mono mb-4 text-sm tracking-wider">COURSES (Cont.)</h4>
+                                    <ul className="space-y-3">
+                                        <CourseItem name="Introduction to Big Data" year="2017-2018" />
+                                        <CourseItem name="Information Retrieval" year="2016-2017" />
+                                        <CourseItem name="Search Engine Technology" year="2016" />
+                                        <CourseItem name="Human-Computer Interaction" year="2015" />
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Research Team */}
+                    <section id="students" className="py-20 backdrop-blur-sm">
+                        <div className="container mx-auto px-6">
+                            <SectionHeader title="Research Team" subtitle="STUDENTS & ALUMNI" />
+                            
+                            <div className="grid md:grid-cols-2 gap-8 mb-8">
+                                <div className="p-6 bg-slate-950/80 rounded-xl border border-white/5 h-full">
+                                    <h4 className="text-white font-bold flex items-center gap-2 mb-6 text-sm border-b border-white/10 pb-4">
+                                      <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                                      PhD Candidates
+                                    </h4>
+                                    <div className="space-y-3">
+                                       {studentData.phd.map((stu, i) => (
+                                         <div key={i} className="flex justify-between text-sm">
+                                            <span className="text-slate-300">{stu.name}</span>
+                                            <span className="font-mono text-xs text-slate-500 bg-slate-900 px-2 py-0.5 rounded">{stu.year}</span>
+                                         </div>
+                                       ))}
+                                    </div>
+                                </div>
+
+                                <div className="p-6 bg-slate-950/80 rounded-xl border border-white/5 h-full">
+                                    <h4 className="text-white font-bold flex items-center gap-2 mb-6 text-sm border-b border-white/10 pb-4">
+                                      <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                      Master Candidates
+                                    </h4>
+                                    <div className="space-y-3">
+                                       {studentData.master.map((stu, i) => (
+                                         <div key={i} className="flex justify-between text-sm">
+                                            <span className="text-slate-300">{stu.name}</span>
+                                            <span className="font-mono text-xs text-slate-500 bg-slate-900 px-2 py-0.5 rounded">{stu.year}</span>
+                                         </div>
+                                       ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-6 bg-slate-950/80 rounded-xl border border-white/5">
+                                <h4 className="text-white font-bold flex items-center gap-2 mb-6 text-sm border-b border-white/10 pb-4">
+                                  <span className="w-2 h-2 rounded-full bg-slate-500"></span>
+                                  Graduated Students
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                  {studentData.alumni.map((stu, i) => (
+                                      <div key={i} className="flex flex-col p-3 rounded bg-slate-900/50 hover:bg-slate-900 transition-colors border border-white/5">
+                                        <div className="flex justify-between items-start mb-1">
+                                            <span className="text-slate-200 font-medium text-sm">{stu.name}</span>
+                                            <span className="text-[10px] font-mono text-slate-500">{stu.year}</span>
+                                        </div>
+                                        <span className="text-cyan-500 text-xs flex items-center gap-1">
+                                          <ChevronRight size={10} /> {stu.dest}
+                                        </span>
+                                      </div>
+                                  ))}
+                                </div>
+                             </div>
+                        </div>
+                    </section>
+
+                    {/* CV / Vita Section */}
+                    <section id="cv" className="py-20 bg-slate-900/50 border-t border-white/5 backdrop-blur-sm">
+                        <div className="container mx-auto px-6">
+                            <SectionHeader title="Career" subtitle="ACADEMIC & PROFESSIONAL HISTORY" />
+                            
+                            <div className="mt-12 grid md:grid-cols-2 gap-12">
+                                <div>
+                                    <h3 className="text-xl font-bold text-white mb-6">Education</h3>
+                                    <div className="space-y-8 pl-4 border-l-2 border-slate-800">
+                                        <TimelineItem 
+                                            year="2008-2011" 
+                                            title="Ph.D., Computer Science" 
+                                            org="Aalborg University, Denmark" 
+                                        />
+                                        <TimelineItem 
+                                            year="2005-2008" 
+                                            title="M.Sci., Computer Science" 
+                                            org="Peking University, China" 
+                                        />
+                                        <TimelineItem 
+                                            year="2001-2005" 
+                                            title="B. Eng., Computer Science" 
+                                            org="Huazhong University of Science and Technology" 
+                                        />
+                                    </div>
+
+                                    <div className="mt-12">
+                                        <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2"><PenTool size={20}/> Professional Activities</h3>
+                                        <div className="bg-slate-950/80 p-4 rounded border border-white/5 space-y-4">
+                                            <ActivityItem year="2026" event="PC Member: KDD, ICDE" />
+                                            <ActivityItem year="2025" event="PC Member: KDD, ICDE" />
+                                            <ActivityItem year="2024" event="PC Member: KDD" />
+                                            <ActivityItem year="2022" event="PC Member: ICDE, AAAI" />
+                                            <ActivityItem year="2021" event="PC Member: IJCAI, WISE" />
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                <div>
+                                    <h3 className="text-xl font-bold text-white mb-6">Positions</h3>
+                                    <div className="space-y-8 pl-4 border-l-2 border-slate-800">
+                                        <TimelineItem 
+                                            year="2019-Present" 
+                                            title="Associate Professor" 
+                                            org="College of CS & SE, Shenzhen University" 
+                                        />
+                                        <TimelineItem 
+                                            year="2023-Present" 
+                                            title="Joint Master Program Supervisor" 
+                                            org="Great Bay University, Dong Guan, Guangdong" 
+                                        />
+                                        <TimelineItem 
+                                            year="2023-Present" 
+                                            title="Joint Master Program Supervisor" 
+                                            org="Shenzhen Institute for Quantum Science and Engineering" 
+                                        />
+                                        <TimelineItem 
+                                            year="2019-2025" 
+                                            title="Joint Master Program Supervisor" 
+                                            org="Kazan Federal University, Russia" 
+                                        />
+                                        <TimelineItem 
+                                            year="2020-2023" 
+                                            title="Joint Master Program Supervisor" 
+                                            org="Huawei" 
+                                        />
+                                        <TimelineItem 
+                                            year="2015-2019" 
+                                            title="Assistant Professor" 
+                                            org="College of CS & SE, Shenzhen University" 
+                                        />
+                                        <TimelineItem 
+                                            year="2013-2015" 
+                                            title="Postdoc" 
+                                            org="Dept. of CS, The University of Hong Kong" 
+                                        />
+                                        <TimelineItem 
+                                            year="2011-2013" 
+                                            title="Postdoc" 
+                                            org="Dept. of CS, Hong Kong Baptist University" 
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Honors */}
+                            <div className="mt-16">
+                                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2"><Award className="text-yellow-500"/> Honors & Awards</h3>
+                                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <HonorCard title="Graduate Education Innovation Program" year="2024" desc="Principal Investigator, SZU - Shenzhen International Quantum Research Institute Joint Graduate Training Practice Base" />
+                                    <HonorCard title="First Prize, 9th National Competition" year="2024" desc="Experimental Teaching Cases in Computer Science Courses - Excellent Case" />
+                                    <HonorCard title="Guangdong Province First-Class Course" year="2023" desc="Algorithm Design and Analysis" />
+                                    <HonorCard title="Excellent Paper Award (2nd Prize)" year="2023" desc="Guangdong Computer Society. Paper: Density-Based Top-K Spatial Textual Clusters Retrieval (IEEE TKDE)" />
+                                    <HonorCard title="Excellent Paper Award (2nd Prize)" year="2021" desc="Guangdong Computer Society. Paper: Density-Based Place Clustering Using Geo-Social Network Data (IEEE TKDE)" />
+                                    <HonorCard title="Shenzhen Univ Teaching Achievement (1st Prize)" year="2021" desc="Innovation and Practice of Dual-Entity Collaborative Training of Master of Computer Engineering" />
+                                </div>
+                            </div>
+
+                        </div>
+                    </section>
+
+                    {/* Footer - Replaced from Document 1 */}
+                    <footer className="py-20 border-t border-white/5 relative z-10 bg-black/40 backdrop-blur-md">
+                        <div className="max-w-6xl mx-auto px-6 text-center">
+                            <h2 className="text-3xl font-bold text-white mb-8">Get in Touch</h2>
+                            <div className="flex flex-wrap justify-center gap-8 mb-12">
+                                 <div className="flex items-center justify-center gap-3 text-gray-400">
+                                    <i className="ph-fill ph-envelope-simple text-cyan-500 text-xl"></i>
+                                    <a href={`mailto:${personalInfo.email}`} className="hover:text-white transition-colors">{personalInfo.email}</a>
+                                </div>
+                                 <div className="flex items-center justify-center gap-3 text-gray-400">
+                                    <i className="ph-fill ph-phone text-cyan-500 text-xl"></i>
+                                    <span>{personalInfo.phone}</span>
+                                </div>
+                            </div>
+                            <div className="text-gray-500 text-sm mb-8 max-w-lg mx-auto">
+                                <i className="ph-fill ph-map-pin text-cyan-500 mr-2"></i>
+                                {personalInfo.address}
+                            </div>
+                            <p className="text-xs text-gray-600 font-mono">
+                                © {new Date().getFullYear()} Dingming Wu. All Rights Reserved. <br/>
+                                Designed with AI.
+                            </p>
+                        </div>
+                    </footer>
+                </div>
+            );
+        };
+
+        // --- Sub-Components ---
+
+        const ContactBadge = ({ icon, text, href }) => {
+            const content = (
+                <div className="flex items-center gap-2 px-4 py-2 bg-slate-900 rounded border border-slate-700 hover:border-cyan-500 transition-colors cursor-pointer group">
+                    <span className="text-cyan-500 group-hover:text-cyan-400">{icon}</span>
+                    <span className="text-sm text-slate-300">{text}</span>
+                </div>
+            );
+
+            return href ? (
+                <a href={href} target="_blank" rel="noreferrer" className="no-underline">
+                    {content}
+                </a>
+            ) : content;
+        };
+
+        const SectionHeader = ({ title, subtitle }) => (
+            <div className="mb-8">
+                <span className="text-cyan-500 font-mono text-xs tracking-widest uppercase mb-2 block">
+                    // {subtitle}
+                </span>
+                <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
+                    {title}
+                </h2>
+                <div className="h-1 w-20 bg-gradient-to-r from-cyan-500 to-transparent mt-4"></div>
+            </div>
+        );
+
+        const ResearchCard = ({ icon, title, desc }) => (
+            <div className="p-6 bg-slate-900/80 rounded-xl border border-slate-800 hover:border-cyan-500/50 transition-all hover:bg-slate-800/50 group">
+                <div className="w-12 h-12 bg-slate-800 rounded-lg flex items-center justify-center text-cyan-400 mb-4 group-hover:scale-110 transition-transform">
+                    {icon}
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
+                <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
+            </div>
+        );
+
+        const ProjectCard = ({ title, role, source, period, amount }) => (
+            <div className="p-6 bg-slate-950/80 rounded-xl border-l-4 border-cyan-500 shadow-lg shadow-cyan-900/10 hover:shadow-cyan-900/20 transition-all">
+                <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-bold text-white text-lg max-w-3xl">{title}</h3>
+                    <span className="font-mono text-xs text-cyan-400 bg-cyan-950/30 px-2 py-1 rounded border border-cyan-800/50 whitespace-nowrap ml-4">{period}</span>
+                </div>
+                <div className="flex flex-wrap gap-4 mt-4 text-sm">
+                    <div className="flex items-center gap-2 text-slate-400">
+                        <User size={14} className="text-cyan-600" />
+                        <span>{role}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-slate-400">
+                        <Database size={14} className="text-cyan-600" />
+                        <span>{source}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-slate-400">
+                        <Activity size={14} className="text-cyan-600" />
+                        <span>{amount}</span>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const PatentItem = ({ id, title, date, authors }) => (
+            <div className="p-4 bg-slate-900/80 rounded border border-slate-800 flex flex-col md:flex-row gap-4 md:items-center">
+                <div className="bg-slate-950 p-2 rounded border border-white/5 font-mono text-xs text-cyan-500 whitespace-nowrap">
+                    {id}
+                </div>
+                <div className="flex-1">
+                    <h4 className="text-white font-medium">{title}</h4>
+                    <p className="text-xs text-slate-400 mt-1">{authors}</p>
+                </div>
+                <div className="text-xs text-slate-500 font-mono whitespace-nowrap">{date}</div>
+            </div>
+        );
+
+        const CourseItem = ({ name, year }) => (
+            <li className="flex justify-between items-center text-sm border-b border-white/5 pb-2 last:border-0 last:pb-0">
+                <span className="text-slate-300">{name}</span>
+                <span className="font-mono text-slate-500 text-xs">{year}</span>
+            </li>
+        );
+
+        const AlumniItem = ({ name, dest, year }) => (
+            <div className="flex justify-between items-center text-sm bg-slate-900/50 p-2 rounded border border-white/5">
+                <div>
+                    <span className="text-slate-300 block">{name}</span>
+                    <span className="text-xs text-slate-500">{year}</span>
+                </div>
+                <span className="text-cyan-500 flex items-center gap-1 text-xs">
+                    <ChevronRight size={10} /> {dest}
+                </span>
+            </div>
+        );
+
+        const TimelineItem = ({ year, title, org }) => (
+            <div className="relative">
+                <div className="absolute -left-[21px] top-1.5 w-3 h-3 bg-slate-950 border-2 border-cyan-500 rounded-full"></div>
+                <span className="block font-mono text-cyan-500 text-xs mb-1">{year}</span>
+                <h4 className="text-white font-bold">{title}</h4>
+                <p className="text-slate-400 text-sm">{org}</p>
+            </div>
+        );
+
+        const ActivityItem = ({ year, event }) => (
+            <div className="flex gap-4 items-center">
+                <span className="font-mono text-cyan-500 text-xs w-10">{year}</span>
+                <span className="text-slate-300 text-sm border-l border-slate-700 pl-4">{event}</span>
+            </div>
+        );
+
+        const HonorCard = ({ title, year, desc }) => (
+            <div className="p-4 bg-slate-800/50 rounded border border-white/5">
+                <div className="flex justify-between items-start mb-2">
+                    <p className="text-white font-medium text-sm">{title}</p>
+                    <span className="text-xs font-mono text-yellow-500">{year}</span>
+                </div>
+                <p className="text-xs text-slate-400 mt-1">{desc}</p>
+            </div>
+        );
+
+        // --- Render ---
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<Portfolio />);
+    </script>
+</body>
+</html>
