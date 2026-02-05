@@ -76,10 +76,24 @@
         };
 
         const researchInterestsData = [
-            { id: 1, title: "Large Graph Analytics", icon: "graph", desc: "I design efficient algorithms for large-scale and streaming graphs, focusing on real-time structural analysis and scalable graph approximation." },
-            { id: 2, title: "Spatio-Temporal & Geo-Social Intelligence", icon: "globe", desc: "My research involves extracting localized patterns from complex spatial and temporal data, develops frameworks for spatial tensor mining, semantic place retrieval, and geo-social clustering to identify density-based patterns and optimize social search and recommendations." },
-            { id: 3, title: "Machine Learning in Business and Manufacturing", icon: "factory", desc: "I develop predictive models and optimization algorithms to enhance operational efficiency and adaptability in smart manufacturing, and data-driven market analysis for client prediction and strategic planning." },
-            { id: 4, title: "Medical Image Analysis", icon: "brain", desc: "I utilize deep learning to analyze multi-modal medical imaging (e.g., MRI and CT, building models for segmentation, in-painting, and computer-aided diagnosis)." }
+            { id: 1, title: "Large Graph Analytics", icon: "graph", desc: [
+                    "How to apply approximation techniques to classical graph algorithms for large, dynamic datasets.",
+                    "How to learn scalable embeddings for large graphs that preserve semantic relationships and topological properties.",
+                    "How to optimize mining and querying in knowledge graphs."
+                ] },
+            { id: 2, title: "Spatio-Temporal & Geo-Social Intelligence", icon: "globe", desc: [
+                    "How to mine dense blocks in spatiotemporal tensors for large-scale data analysis and pattern extraction.",
+                    "How to integrate spatio-temporal data with geo-social interactions to generate real-time, context-aware recommendations.",
+                    "How to efficiently query large spatio-temporal datasets."
+            ] },
+            { id: 3, title: "Machine Learning in Business and Manufacturing", icon: "factory", desc: [
+                    "Develop foundation models for market analysis, client prediction, and strategic planning.",
+                    "Develop foundation models for smart manufacturing."
+            ] },
+            { id: 4, title: "Medical Image Analysis", icon: "brain", desc: [
+                    "Develop foundation models for 3D MRI image segmentation.",
+                    "Develop foundation models for 3D MRI image in-painting."
+            ] }
         ];
 
         const publicationsData = {
@@ -337,7 +351,6 @@
             </div>
         );
 
-        // --- REPLACED Research Component from Document 1 ---
         const Research = () => (
             <section id="research" className="py-24 relative bg-transparent">
                 <div className="container mx-auto px-6">
@@ -352,7 +365,11 @@
                                     </div>
                                     <h3 className="text-lg font-bold text-white leading-tight">{item.title}</h3>
                                 </div>
-                                <p className="text-sm text-gray-400 leading-relaxed text-justify">{item.desc}</p>
+                                <ul className="text-sm text-gray-400 leading-relaxed text-justify space-y-2 list-disc pl-4 marker:text-cyan-500">
+                                    {item.desc.map((point, idx) => (
+                                        <li key={idx}>{point}</li>
+                                    ))}
+                                </ul>
                             </div>
                         ))}
                     </div>
