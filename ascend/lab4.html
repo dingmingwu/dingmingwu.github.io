@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 4: Sinh 算子开发 - AscendC 算子开发实践</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #020617; color: #cbd5e1; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .glass-panel { background: rgba(20, 25, 35, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(0, 240, 255, 0.1); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5); }
+        .glass-panel:hover { border-color: rgba(0, 240, 255, 0.3); box-shadow: 0 0 20px rgba(0, 240, 255, 0.1); }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(30, 41, 59, 0.5); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(71, 85, 105, 0.8); border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(6, 182, 212, 0.6); }
+        html { scroll-behavior: smooth; overflow-y: scroll; }
+        .katex, .katex * { box-sizing: content-box; }
+        .katex .frac-line { border-bottom-style: solid; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const BackgroundCanvas = () => {
+            const canvasRef = useRef(null);
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                let width, height, particles = [], animationFrameId;
+                const resize = () => { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; };
+                class Particle {
+                    constructor() { this.x = Math.random() * width; this.y = Math.random() * height; this.vx = (Math.random() - 0.5) * 0.3; this.vy = (Math.random() - 0.5) * 0.3; this.size = Math.random() * 2 + 1; }
+                    update() { this.x += this.vx; this.y += this.vy; if (this.x < 0 || this.x > width) this.vx *= -1; if (this.y < 0 || this.y > height) this.vy *= -1; }
+                    draw() { ctx.fillStyle = 'rgba(6, 182, 212, 0.5)'; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); }
+                }
+                const init = () => { particles = []; const count = Math.min(window.innerWidth / 15, 80); for (let i = 0; i < count; i++) particles.push(new Particle()); };
+                const animate = () => {
+                    ctx.clearRect(0, 0, width, height);
+                    ctx.lineWidth = 0.5;
+                    for (let i = 0; i < particles.length; i++) {
+                        for (let j = i + 1; j < particles.length; j++) {
+                            const dx = particles[i].x - particles[j].x, dy = particles[i].y - particles[j].y, dist = Math.sqrt(dx*dx + dy*dy);
+                            if (dist < 120) { ctx.strokeStyle = `rgba(6, 182, 212, ${1 - dist/120})`; ctx.beginPath(); ctx.moveTo(particles[i].x, particles[i].y); ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke(); }
+                        }
+                        particles[i].update(); particles[i].draw();
+                    }
+                    animationFrameId = requestAnimationFrame(animate);
+                };
+                window.addEventListener('resize', () => { resize(); init(); });
+                resize(); init(); animate();
+                return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(animationFrameId); };
+            }, []);
+            return <canvas ref={canvasRef} className="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none" />;
+        };
+
+        const SectionHeader = ({ title, subtitle }) => (
+            <div className="mb-8">
+                <span className="text-cyan-500 font-mono text-sm tracking-widest uppercase mb-2 block">// {subtitle}</span>
+                <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight">{title}</h2>
+                <div className="h-1 w-20 bg-gradient-to-r from-cyan-500 to-transparent mt-4"></div>
+            </div>
+        );
+
+        const CodeBlock = ({ code, lang, filename }) => {
+            const [copied, setCopied] = useState(false);
+            const handleCopy = () => { navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+            return (
+                <div className="rounded-xl overflow-hidden mb-6 border border-slate-700/50">
+                    <div className="flex items-center justify-between px-4 py-2 bg-slate-800/80 border-b border-slate-700/50">
+                        <div className="flex items-center gap-2">
+                            <div className="flex gap-1.5"><div className="w-3 h-3 rounded-full bg-red-500/70"></div><div className="w-3 h-3 rounded-full bg-yellow-500/70"></div><div className="w-3 h-3 rounded-full bg-green-500/70"></div></div>
+                            {filename && <span className="text-xs font-mono text-slate-400 ml-2">{filename}</span>}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            {lang && <span className="text-xs font-mono text-slate-500">{lang}</span>}
+                            <button onClick={handleCopy} className="text-xs font-mono text-slate-400 hover:text-cyan-400 transition-colors px-2 py-1 rounded hover:bg-slate-700/50">{copied ? '已复制!' : '复制'}</button>
+                        </div>
+                    </div>
+                    <pre className="p-4 bg-slate-900/80 overflow-x-auto custom-scrollbar"><code className="text-sm font-mono text-slate-300 leading-relaxed">{code}</code></pre>
+                </div>
+            );
+        };
+
+        const Tex = ({ tex }) => {
+            const html = katex.renderToString(tex, { throwOnError: false, displayMode: false });
+            return <span dangerouslySetInnerHTML={{ __html: html }} />;
+        };
+
+        const ExerciseCard = ({ num, title, children }) => (
+            <div className="glass-panel rounded-xl p-6 mb-4" style={{ borderColor: 'rgba(234, 179, 8, 0.2)' }}>
+                <div className="flex items-center gap-3 mb-3">
+                    <span className="text-xs font-mono px-2 py-1 rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">练习 {num}</span>
+                    <h4 className="text-white font-bold">{title}</h4>
+                </div>
+                <div className="text-sm text-slate-400 space-y-2">{children}</div>
+            </div>
+        );
+
+        const tocSections = [
+            { id: 'overview', label: '实验概述' },
+            { id: 'structure', label: '项目结构' },
+            { id: 'code', label: '代码详解' },
+            { id: 'build', label: '编译与运行' },
+            { id: 'exercises', label: '练习任务' },
+            { id: 'faq', label: '常见问题' },
+        ];
+
+        const App = () => {
+            const [scrolled, setScrolled] = useState(false);
+            const [activeSection, setActiveSection] = useState('overview');
+
+            useEffect(() => {
+                const handleScroll = () => {
+                    setScrolled(window.scrollY > 50);
+                    const sections = tocSections.map(s => document.getElementById(s.id)).filter(Boolean);
+                    for (let i = sections.length - 1; i >= 0; i--) {
+                        if (sections[i].getBoundingClientRect().top <= 120) { setActiveSection(tocSections[i].id); break; }
+                    }
+                };
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            return (
+                <div className="min-h-screen font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
+                    <BackgroundCanvas />
+
+                    <nav className={`fixed top-0 w-full z-50 transition-all duration-300 border-b border-white/5 backdrop-blur-md ${scrolled ? 'bg-slate-950/80 py-3' : 'bg-transparent py-5'}`}>
+                        <div className="container mx-auto px-6 flex justify-between items-center">
+                            <a href="index.html" className="flex items-center gap-2 text-slate-400 hover:text-cyan-400 transition-colors no-underline">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                <span className="font-mono text-sm">课程目录</span>
+                            </a>
+                            <div className="flex items-center gap-3">
+                                <span className="text-xs font-mono px-2 py-1 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Lab 04</span>
+                                <span className="text-sm text-white font-bold hidden sm:inline">Sinh 算子开发</span>
+                            </div>
+                        </div>
+                    </nav>
+
+                    <div className="container mx-auto px-6 pt-28 pb-24 max-w-6xl">
+                        <div className="flex gap-8">
+                            <aside className="hidden lg:block w-56 shrink-0">
+                                <div className="sticky top-28">
+                                    <h4 className="text-xs font-mono text-slate-500 uppercase tracking-widest mb-4">目录</h4>
+                                    <nav className="flex flex-col gap-1">
+                                        {tocSections.map(s => (
+                                            <a key={s.id} href={`#${s.id}`} className={`text-sm py-1.5 px-3 rounded-lg no-underline transition-all ${activeSection === s.id ? 'text-cyan-400 bg-cyan-500/10' : 'text-slate-500 hover:text-slate-300'}`}>{s.label}</a>
+                                        ))}
+                                    </nav>
+                                </div>
+                            </aside>
+
+                            <main className="flex-1 min-w-0">
+                                <div className="mb-12">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <span className="text-cyan-500 font-mono text-5xl font-bold opacity-30">04</span>
+                                        <div>
+                                            <h1 className="text-3xl md:text-4xl font-bold text-white">Sinh 算子开发实践</h1>
+                                            <p className="text-slate-400 mt-1">独立完成 Sinh 算子，综合运用所学算子开发模式</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Section 1: Overview */}
+                                <section id="overview" className="mb-16">
+                                    <SectionHeader title="实验概述" subtitle="overview" />
+                                    <div className="glass-panel rounded-xl p-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            <div>
+                                                <h4 className="text-white font-bold mb-2 flex items-center gap-2"><i className="ph-fill ph-target text-cyan-400"></i> 实验目标</h4>
+                                                <ul className="text-sm text-slate-400 space-y-1">
+                                                    <li>独立完成 Sinh 算子的 Kernel 代码</li>
+                                                    <li>综合运用 Exp、Sub、Muls 等 API</li>
+                                                    <li>掌握算子编译、安装、测试全流程</li>
+                                                    <li>通过精度验证测试</li>
+                                                </ul>
+                                            </div>
+                                            <div>
+                                                <h4 className="text-white font-bold mb-2 flex items-center gap-2"><i className="ph-fill ph-lightbulb text-cyan-400"></i> 核心概念</h4>
+                                                <ul className="text-sm text-slate-400 space-y-1">
+                                                    <li>Sinh 公式分解为基本算子</li>
+                                                    <li>复用 Sigmoid 的项目结构</li>
+                                                    <li>算子编译与打包流程</li>
+                                                    <li>AclNN 测试验证</li>
+                                                </ul>
+                                            </div>
+                                            <div>
+                                                <h4 className="text-white font-bold mb-2 flex items-center gap-2"><i className="ph-fill ph-chart-bar text-cyan-400"></i> 难度信息</h4>
+                                                <div className="text-sm text-slate-400 space-y-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <span>难度：</span>
+                                                        <div className="flex gap-1">{[1,2,3].map(i => <svg key={i} width="14" height="14" viewBox="0 0 24 24" fill="rgb(6,182,212)" stroke="rgb(6,182,212)" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>)}</div>
+                                                    </div>
+                                                    <p>语言：C++</p>
+                                                    <p>前置：Lab 1, Lab 2, Lab 3</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="mt-6 p-4 rounded-lg bg-cyan-500/5 border border-cyan-500/20">
+                                            <h4 className="text-cyan-400 font-bold mb-2">Sinh 公式</h4>
+                                            <div className="text-center text-2xl py-2">
+                                                <Tex tex={"\\displaystyle \\sinh(x) = \\frac{\\exp(x) - \\exp(-x)}{2}"} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                {/* Section 2: Project Structure */}
+                                <section id="structure" className="mb-16">
+                                    <SectionHeader title="项目结构" subtitle="project structure" />
+                                    <div className="glass-panel rounded-xl p-6">
+                                        <CodeBlock lang="text" filename="项目目录" code={`SinhCustom/
+├── AclNNInvocation/          # 测试工程（AclNN 单算子调用）
+│   ├── run.sh                # 测试运行脚本
+│   └── ...
+└── SinhCustom/               # 算子核心代码
+    ├── op_host/              # Host 端代码（已提供，无需修改）
+    │   ├── sinh_custom_tiling.h
+    │   └── sinh_custom.cpp
+    └── op_kernel/
+        └── SinhCustom.cpp    # Kernel 端代码（需要补充！）`} />
+                                        <div className="mt-4 p-3 rounded-lg bg-yellow-500/5 border border-yellow-500/20">
+                                            <p className="text-sm text-yellow-400">本实验只需修改 <code className="text-cyan-400 text-xs">op_kernel/SinhCustom.cpp</code>，其余文件已提供完整实现。</p>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                {/* Section 3: Code Walkthrough */}
+                                <section id="code" className="mb-16">
+                                    <SectionHeader title="代码详解" subtitle="code walkthrough" />
+
+                                    <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                        <i className="ph-fill ph-file-cpp text-cyan-400"></i> op_kernel/SinhCustom.cpp — Kernel 端
+                                    </h3>
+                                    <p className="text-slate-400 mb-4 text-sm">Sinh 算子的 Kernel 端结构与 Sigmoid 相同（KernelSinh 类），需要补充完整的 Init、Process、CopyIn、Compute、CopyOut 代码。</p>
+
+                                    <div className="mt-4 p-4 rounded-lg bg-cyan-500/5 border border-cyan-500/20 mb-6">
+                                        <h4 className="text-cyan-400 font-bold mb-3">Sinh 计算步骤拆分</h4>
+                                        <div className="text-sm text-slate-400 space-y-2">
+                                            <p>公式 <Tex tex={"\\sinh(x) = \\frac{\\exp(x) - \\exp(-x)}{2}"} /> 拆分为：</p>
+                                            <div className="p-3 bg-slate-900/50 rounded font-mono text-xs space-y-1">
+                                                <p>1. 计算 <span className="text-cyan-400">exp(x)</span>  → 使用 Exp 算子</p>
+                                                <p>2. 计算 <span className="text-cyan-400">-x</span>  → 使用 Muls 算子（乘以标量 -1）</p>
+                                                <p>3. 计算 <span className="text-cyan-400">exp(-x)</span>  → 使用 Exp 算子</p>
+                                                <p>4. 计算 <span className="text-cyan-400">exp(x) - exp(-x)</span>  → 使用 Sub 算子</p>
+                                                <p>5. 计算 <span className="text-cyan-400">(exp(x) - exp(-x)) / 2</span>  → 使用 Muls 算子（乘以 0.5）</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <h4 className="text-lg font-bold text-white mb-3">参考实现框架</h4>
+                                    <p className="text-slate-400 mb-4 text-sm">以下是 SinhCustom.cpp 的整体框架。参考 Lab 2 的 KernelAdd 和 Lab 3 的 KernelSigmoid，填充各方法。</p>
+                                    <CodeBlock lang="cpp" filename="SinhCustom.cpp — 框架" code={`#include "kernel_operator.h"
+using namespace AscendC;
+constexpr int32_t BUFFER_NUM = 2;
+
+class KernelSinh {
+public:
+    __aicore__ inline KernelSinh() {}
+
+    __aicore__ inline void Init(GM_ADDR x, GM_ADDR y,
+        uint32_t totalLength, uint32_t tileNum)
+    {
+        // 参考 KernelAdd/KernelSigmoid 的 Init
+        // 计算 blockLength, tileLength
+        // 设置 xGm, yGm 的 GlobalBuffer
+        // 初始化 pipe 的输入输出队列
+    }
+
+    __aicore__ inline void Process()
+    {
+        int32_t loopCount = this->tileNum * BUFFER_NUM;
+        for (int32_t i = 0; i < loopCount; i++) {
+            CopyIn(i);
+            Compute(i);
+            CopyOut(i);
+        }
+    }
+
+private:
+    __aicore__ void CopyIn(int32_t progress)
+    {
+        // 从全局内存搬入 xLocal
+        // 参考 KernelSigmoid 的 CopyIn（单输入）
+    }
+
+    __aicore__ void Compute(int32_t progress)
+    {
+        // 实现 sinh(x) = (exp(x) - exp(-x)) / 2
+        // 1. xLocal = inQueueX.DeQue()
+        // 2. expPos = Exp(xLocal)          // exp(x)
+        // 3. negX = Muls(xLocal, -1)       // -x
+        // 4. expNeg = Exp(negX)            // exp(-x)
+        // 5. diff = Sub(expPos, expNeg)    // exp(x) - exp(-x)
+        // 6. result = Muls(diff, 0.5)      // / 2
+        // 7. outQueueY.EnQue(result)
+        // 注意：释放所有临时 LocalTensor！
+    }
+
+    __aicore__ void CopyOut(int32_t progress)
+    {
+        // 从局部内存搬出到全局内存
+        // 参考 KernelSigmoid 的 CopyOut
+    }
+
+private:
+    TPipe pipe;
+    TQue<QuePosition::VECIN, BUFFER_NUM> inQueueX;
+    TQue<QuePosition::VECOUT, BUFFER_NUM> outQueueY;
+    GlobalTensor<half> xGm;
+    GlobalTensor<half> yGm;
+    uint32_t blockLength;
+    uint32_t tileNum;
+    uint32_t tileLength;
+};
+
+extern "C" __global__ __aicore__ void sinh_custom(GM_ADDR x, GM_ADDR y,
+    GM_ADDR workspace, GM_ADDR tiling) {
+    GET_TILING_DATA(tiling_data, tiling);
+    KernelSinh op;
+    op.Init(x, y, tiling_data.totalLength, tiling_data.tileNum);
+    op.Process();
+}`} />
+
+                                    <div className="glass-panel rounded-xl p-6 mt-6">
+                                        <h4 className="text-white font-bold mb-3">关键 API 速查</h4>
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-sm">
+                                                <thead>
+                                                    <tr className="text-left text-cyan-400 font-mono border-b border-slate-700">
+                                                        <th className="pb-2 pr-4">API</th>
+                                                        <th className="pb-2 pr-4">功能</th>
+                                                        <th className="pb-2">示例</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="text-slate-400">
+                                                    <tr className="border-b border-slate-800"><td className="py-2 pr-4 font-mono text-cyan-300">Exp</td><td className="pr-4">逐元素指数</td><td className="font-mono text-xs">Exp(dst, src, len)</td></tr>
+                                                    <tr className="border-b border-slate-800"><td className="py-2 pr-4 font-mono text-cyan-300">Sub</td><td className="pr-4">向量减法</td><td className="font-mono text-xs">Sub(dst, src1, src2, len)</td></tr>
+                                                    <tr className="border-b border-slate-800"><td className="py-2 pr-4 font-mono text-cyan-300">Muls</td><td className="pr-4">向量×标量</td><td className="font-mono text-xs">Muls(dst, src, scalar, len)</td></tr>
+                                                    <tr className="border-b border-slate-800"><td className="py-2 pr-4 font-mono text-cyan-300">Adds</td><td className="pr-4">向量+标量</td><td className="font-mono text-xs">Adds(dst, src, scalar, len)</td></tr>
+                                                    <tr><td className="py-2 pr-4 font-mono text-cyan-300">DataCopy</td><td className="pr-4">内存拷贝</td><td className="font-mono text-xs">DataCopy(dst, src, len)</td></tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                {/* Section 4: Build & Run */}
+                                <section id="build" className="mb-16">
+                                    <SectionHeader title="编译与运行" subtitle="build & run" />
+                                    <div className="space-y-6">
+                                        <div className="glass-panel rounded-xl p-6">
+                                            <h4 className="text-white font-bold mb-3">步骤 1：编译算子工程</h4>
+                                            <p className="text-sm text-slate-400 mb-3">在 SinhCustom 算子工程目录下执行：</p>
+                                            <CodeBlock lang="bash" code={`bash build.sh`} />
+                                        </div>
+                                        <div className="glass-panel rounded-xl p-6">
+                                            <h4 className="text-white font-bold mb-3">步骤 2：安装算子包</h4>
+                                            <CodeBlock lang="bash" code={`cd build_out
+./custom_opp_ubuntu_aarch64.run`} />
+                                        </div>
+                                        <div className="glass-panel rounded-xl p-6">
+                                            <h4 className="text-white font-bold mb-3">步骤 3：运行测试</h4>
+                                            <p className="text-sm text-slate-400 mb-3">进入 AclNNInvocation 测试工程目录：</p>
+                                            <CodeBlock lang="bash" code={`bash run.sh`} />
+                                        </div>
+                                        <div className="glass-panel rounded-xl p-6">
+                                            <h4 className="text-white font-bold mb-3">预期输出</h4>
+                                            <CodeBlock lang="text" code={`[INFO]  Destory resource success
+INFO: acl executable run success!
+test pass
+
+##########################################
+INFO: you have passed the Precision!
+##########################################`} />
+                                        </div>
+                                    </div>
+                                </section>
+
+                                {/* Section 5: Exercises */}
+                                <section id="exercises" className="mb-16">
+                                    <SectionHeader title="练习任务" subtitle="exercises" />
+
+                                    <ExerciseCard num="1" title="完成 SinhCustom.cpp 的 Kernel 代码">
+                                        <p><strong>目标：</strong>独立完成 SinhCustom/op_kernel/SinhCustom.cpp 中所有需补充的代码</p>
+                                        <p><strong>需要填充的方法：</strong></p>
+                                        <ul className="list-disc list-inside space-y-1 ml-2">
+                                            <li><code className="text-cyan-400">Init</code> — 初始化 GlobalTensor、队列、计算参数</li>
+                                            <li><code className="text-cyan-400">Process</code> — 定义 loopCount 并循环执行</li>
+                                            <li><code className="text-cyan-400">CopyIn</code> — 从全局内存搬入数据</li>
+                                            <li><code className="text-cyan-400">Compute</code> — 实现 sinh 公式：(exp(x) - exp(-x)) / 2</li>
+                                            <li><code className="text-cyan-400">CopyOut</code> — 将结果搬出到全局内存</li>
+                                        </ul>
+                                        <p className="mt-3"><strong>提示：</strong></p>
+                                        <ul className="list-disc list-inside space-y-1 ml-2">
+                                            <li>参考 Lab 2 的 KernelAdd 和 Lab 3 的 KernelSigmoid</li>
+                                            <li>Sinh 只有一个输入 x 和一个输出 y（与 Sigmoid 相同）</li>
+                                            <li>Compute 中需要临时 LocalTensor 存放中间结果，记得释放</li>
+                                            <li>使用 <code className="text-cyan-400">Muls(dst, src, (half)(-1.0), len)</code> 计算 -x</li>
+                                            <li>使用 <code className="text-cyan-400">Muls(dst, src, (half)(0.5), len)</code> 除以 2</li>
+                                        </ul>
+                                    </ExerciseCard>
+                                </section>
+
+                                {/* Section 6: FAQ */}
+                                <section id="faq" className="mb-16">
+                                    <SectionHeader title="常见问题" subtitle="FAQ" />
+                                    <div className="space-y-4">
+                                        <div className="glass-panel rounded-xl p-6">
+                                            <h4 className="text-white font-bold mb-2">Q: Sinh 算子与 Sigmoid 算子的项目结构相同吗？</h4>
+                                            <p className="text-sm text-slate-400">是的，两者项目结构完全相同：SinhCustom（算子核心）+ AclNNInvocation（测试工程）。区别仅在于 Compute 方法中的计算公式不同。</p>
+                                        </div>
+                                        <div className="glass-panel rounded-xl p-6">
+                                            <h4 className="text-white font-bold mb-2">Q: Compute 中需要几个临时 LocalTensor？</h4>
+                                            <p className="text-sm text-slate-400">至少需要 2-3 个临时缓冲区来存放 exp(x)、exp(-x) 等中间结果。可以复用缓冲区来减少内存占用。注意每个 AllocTensor 都需要对应的 FreeTensor。</p>
+                                        </div>
+                                        <div className="glass-panel rounded-xl p-6">
+                                            <h4 className="text-white font-bold mb-2">Q: 遇到编译错误怎么办？</h4>
+                                            <p className="text-sm text-slate-400">
+                                                常见原因：<br/>
+                                                1. 忘记 <code className="text-cyan-400">#include "kernel_operator.h"</code><br/>
+                                                2. 未正确使用 <code className="text-cyan-400">using namespace AscendC;</code><br/>
+                                                3. half 类型字面量需要后缀 <code className="text-cyan-400">h</code>（如 <code className="text-cyan-400">0.5h</code>、<code className="text-cyan-400">-1.0h</code>）或使用类型转换 <code className="text-cyan-400">(half)(-1.0)</code>
+                                            </p>
+                                        </div>
+                                        <div className="glass-panel rounded-xl p-6">
+                                            <h4 className="text-white font-bold mb-2">Q: 精度测试不通过？</h4>
+                                            <p className="text-sm text-slate-400">Sinh 公式相对简单，通常不存在 Sigmoid 那样的 Reciprocal 精度问题。如果精度不通过，请检查：1) Muls 的标量值是否正确（-1 和 0.5）；2) Sub 的参数顺序是否正确（exp(x) - exp(-x)，不是反过来）；3) 是否有内存泄漏导致数据错乱。</p>
+                                        </div>
+                                        <div className="glass-panel rounded-xl p-6">
+                                            <h4 className="text-white font-bold mb-2">Q: 更多常见问题？</h4>
+                                            <p className="text-sm text-slate-400">关于 Adds/Muls vs Add/Mul 区别、内存泄漏防护、error 161001 等问题，请参考 <a href="lab3.html#faq" className="text-cyan-400 hover:text-cyan-300 no-underline">Lab 3 的常见问题</a> 部分。</p>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                {/* Nav Footer */}
+                                <div className="flex justify-between items-center pt-8 border-t border-slate-800">
+                                    <a href="lab3.html" className="flex items-center gap-2 text-slate-400 hover:text-cyan-400 transition-colors no-underline text-sm font-mono">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                        Lab 03: Sigmoid 算子认证
+                                    </a>
+                                    <a href="index.html" className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors no-underline text-sm font-mono">
+                                        返回课程目录
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                    </a>
+                                </div>
+                            </main>
+                        </div>
+                    </div>
+
+                    <footer className="border-t border-white/5 py-8 px-6">
+                        <div className="container mx-auto max-w-5xl text-center">
+                            <p className="text-sm text-slate-600 font-mono">Shenzhen University &middot; College of Computer Science &amp; Software Engineering</p>
+                        </div>
+                    </footer>
+                </div>
+            );
+        };
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
