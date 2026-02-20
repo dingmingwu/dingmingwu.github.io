@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NP Theory - Algorithm Design and Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #020617; color: #cbd5e1; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .glass-panel { background: rgba(20, 25, 35, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(0, 240, 255, 0.1); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5); }
+        .glass-panel:hover { border-color: rgba(0, 240, 255, 0.3); box-shadow: 0 0 20px rgba(0, 240, 255, 0.1); }
+        html { scroll-behavior: smooth; overflow-y: scroll; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
+
+        const BackgroundCanvas = () => {
+            const canvasRef = useRef(null);
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                let width, height, particles = [], animationFrameId;
+                const resize = () => { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; };
+                class Particle {
+                    constructor() { this.x = Math.random() * width; this.y = Math.random() * height; this.vx = (Math.random() - 0.5) * 0.3; this.vy = (Math.random() - 0.5) * 0.3; this.size = Math.random() * 2 + 1; }
+                    update() { this.x += this.vx; this.y += this.vy; if (this.x < 0 || this.x > width) this.vx *= -1; if (this.y < 0 || this.y > height) this.vy *= -1; }
+                    draw() { ctx.fillStyle = 'rgba(6, 182, 212, 0.5)'; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); }
+                }
+                const init = () => { particles = []; const count = Math.min(window.innerWidth / 30, 25); for (let i = 0; i < count; i++) particles.push(new Particle()); };
+                const animate = () => {
+                    ctx.clearRect(0, 0, width, height);
+                    ctx.lineWidth = 0.5;
+                    for (let i = 0; i < particles.length; i++) {
+                        for (let j = i + 1; j < particles.length; j++) {
+                            const dx = particles[i].x - particles[j].x, dy = particles[i].y - particles[j].y, dist = Math.sqrt(dx*dx + dy*dy);
+                            if (dist < 80) { ctx.strokeStyle = `rgba(6, 182, 212, ${1 - dist/80})`; ctx.beginPath(); ctx.moveTo(particles[i].x, particles[i].y); ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke(); }
+                        }
+                        particles[i].update(); particles[i].draw();
+                    }
+                    animationFrameId = requestAnimationFrame(animate);
+                };
+                window.addEventListener('resize', () => { resize(); init(); });
+                resize(); init(); animate();
+                return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(animationFrameId); };
+            }, []);
+            return <canvas ref={canvasRef} className="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none" />;
+        };
+
+        const SectionHeader = ({ title, subtitle }) => (
+            <div className="mb-8">
+                <span className="text-cyan-500 font-mono text-sm tracking-widest uppercase mb-2 block">// {subtitle}</span>
+                <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight">{title}</h2>
+                <div className="h-1 w-20 bg-gradient-to-r from-cyan-500 to-transparent mt-4"></div>
+            </div>
+        );
+
+        const KnowledgeCard = ({ title, children, onClick, active }) => (
+            <div
+                className={`glass-panel p-6 rounded-xl mb-4 transition-all duration-200${onClick ? ' cursor-pointer' : ''}`}
+                onClick={onClick}
+                style={active ? { borderColor: 'rgba(34,211,238,0.5)', background: 'rgba(6,182,212,0.07)', boxShadow: '0 0 16px rgba(34,211,238,0.1)' } : {}}
+            >
+                <h4 className={`text-lg font-bold mb-2 ${active ? 'text-cyan-300' : 'text-white'}`}>{title}</h4>
+                {children && <div className="text-slate-400 text-base leading-relaxed">{children}</div>}
+            </div>
+        );
+
+        const StepButton = ({ step, setStep, maxStep, label }) => (
+            <div className="flex items-center gap-3 mt-4">
+                <button onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0} className="px-3 py-1.5 bg-slate-800 text-slate-300 rounded text-sm font-mono hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">Prev</button>
+                <button onClick={() => setStep(Math.min(maxStep, step + 1))} disabled={step >= maxStep} className="px-3 py-1.5 bg-cyan-600 text-white rounded text-sm font-mono hover:bg-cyan-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">Next</button>
+                <span className="text-sm text-slate-500 font-mono">{label || `Step ${step} / ${maxStep}`}</span>
+            </div>
+        );
+
+        const Tex = React.memo(({ tex }) => {
+            const html = katex.renderToString(tex, { throwOnError: false });
+            return <span dangerouslySetInnerHTML={{ __html: html }} />;
+        });
+
+        const sections = [
+            { id: 'complexity', num: '01', title: '算法复杂度分析', titleEn: 'Complexity Analysis' },
+            { id: 'divide', num: '02', title: '分治法', titleEn: 'Divide and Conquer' },
+            { id: 'backtrack', num: '03', title: '回溯法', titleEn: 'Backtracking' },
+            { id: 'dp', num: '04', title: '动态规划', titleEn: 'Dynamic Programming' },
+            { id: 'greedy', num: '05', title: '贪心法', titleEn: 'Greedy Algorithms' },
+            { id: 'maxflow', num: '06', title: '最大流', titleEn: 'Maximum Flow' },
+            { id: 'amortized', num: '07', title: '摊还分析', titleEn: 'Amortized Analysis' },
+            { id: 'np', num: '08', title: 'NP理论', titleEn: 'NP Theory' },
+        ];
+
+        const SVGText = ({ x, y, width, color = '#64748b', fontSize = 16, center = false, children }) => {
+            const h = fontSize + 14;
+            return (
+                <foreignObject x={center ? x - width/2 : x} y={y - fontSize - 4} width={width} height={h}>
+                    <div style={{
+                        color, fontSize: `${fontSize}px`,
+                        fontFamily: "'JetBrains Mono', monospace",
+                        display: 'flex', alignItems: 'center',
+                        justifyContent: center ? 'center' : 'flex-start',
+                        height: '100%', whiteSpace: 'nowrap',
+                    }}>
+                        {children}
+                    </div>
+                </foreignObject>
+            );
+        };
+
+        const PNPAnimation = () => {
+            const [mode, setMode] = useState('P');
+            const [step, setStep] = useState(0);
+            const switchMode = (m) => { setMode(m); setStep(0); };
+
+            const sortSteps = useMemo(() => {
+                const a = [4,1,3,2];
+                const n = a.length;
+                const steps = [{ arr: [...a], swap: null, label: <span>初始数组，准备进行冒泡排序</span> }];
+                for (let i = 0; i < n - 1; i++) {
+                    for (let j = 0; j < n - i - 1; j++) {
+                        if (a[j] > a[j+1]) {
+                            const big = a[j], sml = a[j+1];
+                            [a[j], a[j+1]] = [a[j+1], a[j]];
+                            steps.push({ arr: [...a], swap: [j, j+1],
+                                label: <span><Tex tex={`${big} > ${sml}`} />，交换位置 <Tex tex={`[${j}]`} /> 与 <Tex tex={`[${j+1}]`} /></span>
+                            });
+                        }
+                    }
+                }
+                const swapCount = steps.length - 1;
+                steps.push({ arr: [...a], swap: null,
+                    label: <span>排序完成！共 {swapCount} 次交换，<Tex tex="O(n^2)" /> 多项式时间 ✓</span>
+                });
+                return steps;
+            }, []);
+
+            const NP_ARR = [2, 7, 4, 1, 5, 3];
+            const NP_TARGET = 10;
+            const npSteps = useMemo(() => [
+                { highlighted: [], sum: null, label: <span>问题：数组 <Tex tex="[2,7,4,1,5,3]" /> 中，是否存在子集和等于 <Tex tex="10" />？</span> },
+                { highlighted: [], sum: null, label: <span>声称索引 <Tex tex="\{0,2,3,5\}" /> 的子集（即 2, 4, 1, 3）满足条件</span> },
+                { highlighted: [0], sum: 2,   label: <span><Tex tex="a[0] = 2" />，累计和 <Tex tex="= 2" /></span> },
+                { highlighted: [0,2], sum: 6,  label: <span><Tex tex="a[2] = 4" />，累计和 <Tex tex="= 2 + 4 = 6" /></span> },
+                { highlighted: [0,2,3], sum: 7, label: <span><Tex tex="a[3] = 1" />，累计和 <Tex tex="= 6 + 1 = 7" /></span> },
+                { highlighted: [0,2,3,5], sum: 10, label: <span><Tex tex="a[5] = 3" />，累计和 <Tex tex="= 7 + 3 = 10" /> ✓</span> },
+                { highlighted: [0,2,3,5], sum: 10, label: <span>验证完成！仅用 <Tex tex="O(k) = O(4)" /> 步加法，多项式时间 ✓</span> },
+            ], []);
+
+            const maxStep = mode === 'P' ? sortSteps.length - 1 : npSteps.length - 1;
+            const curSort = sortSteps[Math.min(step, sortSteps.length - 1)];
+            const curNP   = npSteps[Math.min(step, npSteps.length - 1)];
+
+            const w = 460;
+            const barMaxH = 110, barW = 58, barGap = 18, baseY = 158, maxVal = 4;
+            const totalBarW = sortSteps[0].arr.length * barW + (sortSteps[0].arr.length - 1) * barGap;
+            const startX = (w - totalBarW) / 2;
+
+            const npBoxW = 52, npBoxGap = 10;
+            const npTotal = NP_ARR.length * npBoxW + (NP_ARR.length - 1) * npBoxGap;
+            const npStartX = (w - npTotal) / 2;
+
+            return (
+                <div>
+                    <div className="flex gap-2 mb-4">
+                        {[['P', 'P — 多项式可解', '#22d3ee', 'rgba(6,182,212,0.12)', 'rgba(34,211,238,0.35)'],
+                          ['NP', 'NP — 多项式可验证', '#a78bfa', 'rgba(167,139,250,0.12)', 'rgba(167,139,250,0.35)']
+                        ].map(([id, label, color, bg, border]) => (
+                            <button key={id} onClick={() => switchMode(id)}
+                                className="px-3 py-1.5 rounded font-mono text-base font-bold transition-all"
+                                style={mode === id
+                                    ? { color, background: bg, border: `1px solid ${border}` }
+                                    : { color: '#475569', background: 'transparent', border: '1px solid transparent' }}>
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="text-base font-mono mb-3 min-h-[2.8em] leading-relaxed"
+                         style={{ color: mode === 'P' ? '#67e8f9' : '#c4b5fd' }}>
+                        {mode === 'P' ? curSort.label : curNP.label}
+                    </div>
+
+                    {mode === 'P' ? (
+                        <svg viewBox={`0 0 ${w} 200`} className="w-full max-w-md mx-auto">
+                            {curSort.arr.map((v, i) => {
+                                const barH = (v / maxVal) * barMaxH;
+                                const x = startX + i * (barW + barGap);
+                                const y = baseY - barH;
+                                const isSwap = curSort.swap && (i === curSort.swap[0] || i === curSort.swap[1]);
+                                return (
+                                    <g key={i}>
+                                        <rect x={x} y={y} width={barW} height={barH} rx="5"
+                                            fill={isSwap ? 'rgba(251,191,36,0.3)' : 'rgba(6,182,212,0.18)'}
+                                            stroke={isSwap ? '#fbbf24' : '#22d3ee'} strokeWidth="1.5" />
+                                        <text x={x + barW/2} y={y - 8} fill={isSwap ? '#fbbf24' : '#94a3b8'}
+                                            fontSize="16" textAnchor="middle" fontFamily="JetBrains Mono" fontWeight="bold">{v}</text>
+                                        <text x={x + barW/2} y={baseY + 18} fill="#475569"
+                                            fontSize="16" textAnchor="middle" fontFamily="JetBrains Mono">[{i}]</text>
+                                    </g>
+                                );
+                            })}
+                            <line x1={startX - 6} y1={baseY} x2={startX + totalBarW + 6} y2={baseY} stroke="#1e293b" strokeWidth="1" />
+                            {step === sortSteps.length - 1 && (
+                                <SVGText x={w/2} y={197} width={320} color="#22d3ee" center>
+                                    <Tex tex="\text{排序}\; \in P\text{，多项式时间可解}\; \checkmark" />
+                                </SVGText>
+                            )}
+                        </svg>
+                    ) : (
+                        <svg viewBox={`0 0 ${w} 200`} className="w-full max-w-md mx-auto">
+                            {NP_ARR.map((v, i) => {
+                                const x = npStartX + i * (npBoxW + npBoxGap);
+                                const hl = curNP.highlighted.includes(i);
+                                return (
+                                    <g key={i}>
+                                        <rect x={x} y={18} width={npBoxW} height={46} rx="6"
+                                            fill={hl ? 'rgba(167,139,250,0.28)' : 'rgba(30,41,59,0.7)'}
+                                            stroke={hl ? '#a78bfa' : '#334155'} strokeWidth="1.5" />
+                                        <text x={x + npBoxW/2} y={46} fill={hl ? '#c4b5fd' : '#64748b'}
+                                            fontSize="16" textAnchor="middle" fontFamily="JetBrains Mono" fontWeight="bold">{v}</text>
+                                        <text x={x + npBoxW/2} y={82} fill="#334155"
+                                            fontSize="16" textAnchor="middle" fontFamily="JetBrains Mono">[{i}]</text>
+                                    </g>
+                                );
+                            })}
+                            {curNP.sum !== null && (
+                                <SVGText x={w/2} y={112} width={300} color="#a78bfa" center>
+                                    <Tex tex={`\\text{当前和}\\; = ${curNP.sum}${curNP.sum === NP_TARGET ? '\\; \\checkmark' : ''}`} />
+                                </SVGText>
+                            )}
+                            {step === npSteps.length - 1 && (
+                                <SVGText x={w/2} y={142} width={380} color="#a78bfa" center>
+                                    <Tex tex="\text{子集和验证}\; \in NP\text{，多项式时间可验证}\; \checkmark" />
+                                </SVGText>
+                            )}
+                            <SVGText x={w/2} y={175} width={300} color="#475569" center>
+                                <Tex tex={`\\text{目标}\\; T = ${NP_TARGET}`} />
+                            </SVGText>
+                        </svg>
+                    )}
+
+                    <StepButton step={step} setStep={setStep} maxStep={maxStep} label={`Step ${step} / ${maxStep}`} />
+                </div>
+            );
+        };
+
+        const ReductionAnimation = () => {
+            const [step, setStep] = useState(0);
+            const maxStep = 4;
+
+            const labels = useMemo(() => [
+                <span>多项式时间归约 <Tex tex="A \leq_p B" />：在多项式时间内将 <Tex tex="A" /> 的输入转化为 <Tex tex="B" /> 的输入</span>,
+                <span>核心等价：<Tex tex="x \in A \iff f(x) \in B" />，转化函数 <Tex tex="f" /> 在多项式时间内可计算</span>,
+                <span>若 <Tex tex="B" /> 易解，则 <Tex tex="A" /> 也易解：先用 <Tex tex="f" /> 转化，再用 <Tex tex="B" /> 的算法求解</span>,
+                <span>若 <Tex tex="A" /> 难解（NP-Hard），则 <Tex tex="B" /> 也必然难解：归约是证明 NP-Hard 的核心方法</span>,
+                <span>Cook-Levin 定理：SAT 是第一个被证明的 NP-Complete 问题，所有 NP 问题均可归约到 SAT</span>,
+            ], []);
+
+            const w = 480, h = 240;
+            const bW = 110, bH = 70, bY = 90;
+            const bAx = 40, bBx = 330;
+            const aCx = bAx + bW/2, bCx = bBx + bW/2;
+            const cY = bY + bH/2;
+
+            const stepColor = step === 2 ? '#22d3ee' : step === 3 ? '#f87171' : '#475569';
+            const stepFill  = step === 2 ? 'rgba(34,211,238,0.15)' : step === 3 ? 'rgba(248,113,113,0.15)' : 'rgba(30,41,59,0.7)';
+            const mId = step === 2 ? 'rEasy' : step === 3 ? 'rHard' : 'rNeutral';
+
+            const chain = [
+                { label: '\\forall NP',    color: '#a78bfa', fill: 'rgba(167,139,250,0.15)', stroke: '#a78bfa' },
+                { label: 'SAT',            color: '#86efac', fill: 'rgba(134,239,172,0.12)', stroke: '#86efac' },
+                { label: '3\\text{-SAT}',  color: '#86efac', fill: 'rgba(134,239,172,0.12)', stroke: '#86efac' },
+                { label: '\\cdots',        color: '#64748b', fill: 'rgba(71,85,105,0.10)',   stroke: '#475569' },
+                { label: '\\text{新问题}', color: '#f87171', fill: 'rgba(248,113,113,0.12)', stroke: '#f87171' },
+            ];
+            const cBW = 76, cBH = 48, cBY = 55, cGap = 16;
+            const cStart = (w - (chain.length * cBW + (chain.length - 1) * cGap)) / 2;
+
+            return (
+                <div>
+                    <div className="text-base font-mono mb-3 min-h-[2.8em] leading-relaxed" style={{ color: '#86efac' }}>
+                        {labels[step]}
+                    </div>
+                    {step < 4 ? (
+                        <svg viewBox={`0 50 ${w} 170`} className="w-full max-w-md mx-auto">
+                            <defs>
+                                <marker id="rNeutral" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                                    <path d="M0,0 L0,6 L6,3 z" fill="#94a3b8" />
+                                </marker>
+                                <marker id="rEasy" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                                    <path d="M0,0 L0,6 L6,3 z" fill="#22d3ee" />
+                                </marker>
+                                <marker id="rHard" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                                    <path d="M0,0 L0,6 L6,3 z" fill="#f87171" />
+                                </marker>
+                            </defs>
+                            <rect x={bAx} y={bY} width={bW} height={bH} rx="8"
+                                fill={stepFill} stroke={stepColor} strokeWidth="1.5" />
+                            <SVGText x={aCx} y={cY+6} width={bW} color={stepColor} center><Tex tex="A" /></SVGText>
+                            <SVGText x={aCx} y={bY-10} width={120} color="#64748b" center><Tex tex="\text{问题}\; A" /></SVGText>
+                            <rect x={bBx} y={bY} width={bW} height={bH} rx="8"
+                                fill={stepFill} stroke={stepColor} strokeWidth="1.5" />
+                            <SVGText x={bCx} y={cY+6} width={bW} color={stepColor} center><Tex tex="B" /></SVGText>
+                            <SVGText x={bCx} y={bY-10} width={120} color="#64748b" center><Tex tex="\text{问题}\; B" /></SVGText>
+                            <line x1={bAx+bW+4} y1={cY} x2={bBx-4} y2={cY}
+                                stroke={step >= 2 ? stepColor : '#94a3b8'} strokeWidth="2"
+                                markerEnd={`url(#${mId})`} />
+                            <SVGText x={w/2} y={cY-14} width={50} color={step >= 2 ? stepColor : '#94a3b8'} center>
+                                <Tex tex="f" />
+                            </SVGText>
+                            {step >= 1 && (
+                                <SVGText x={w/2} y={cY+28} width={160} color="#64748b" center>
+                                    <Tex tex="A \leq_p B" />
+                                </SVGText>
+                            )}
+                            {step === 2 && <>
+                                <SVGText x={aCx} y={bY+bH+34} width={180} color="#22d3ee" center>
+                                    <Tex tex="\text{易解}\; \checkmark" />
+                                </SVGText>
+                                <SVGText x={bCx} y={bY+bH+34} width={200} color="#22d3ee" center>
+                                    <Tex tex="\text{易解（已知）}" />
+                                </SVGText>
+                            </>}
+                            {step === 3 && <>
+                                <SVGText x={aCx} y={bY+bH+34} width={200} color="#f87171" center>
+                                    <Tex tex="\text{难解（已知）}" />
+                                </SVGText>
+                                <SVGText x={bCx} y={bY+bH+34} width={220} color="#f87171" center>
+                                    <Tex tex="\Rightarrow\; \text{NP-Hard}" />
+                                </SVGText>
+                            </>}
+                        </svg>
+                    ) : (
+                        <svg viewBox={`0 15 ${w} 170`} className="w-full max-w-md mx-auto">
+                            <defs>
+                                <marker id="cArr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                                    <path d="M0,0 L0,6 L6,3 z" fill="#86efac" />
+                                </marker>
+                            </defs>
+                            {chain.map((item, i) => {
+                                const x = cStart + i * (cBW + cGap);
+                                const cy = cBY + cBH/2;
+                                return (
+                                    <g key={i}>
+                                        <rect x={x} y={cBY} width={cBW} height={cBH} rx="6"
+                                            fill={item.fill} stroke={item.stroke} strokeWidth="1.5" />
+                                        <SVGText x={x+cBW/2} y={cy+7} width={cBW} color={item.color} center>
+                                            <Tex tex={item.label} />
+                                        </SVGText>
+                                        {i < chain.length - 1 && <>
+                                            <line x1={x+cBW+2} y1={cy} x2={x+cBW+cGap-2} y2={cy}
+                                                stroke="#86efac" strokeWidth="1.5" markerEnd="url(#cArr)" />
+                                            <SVGText x={x+cBW+cGap/2} y={cBY-10} width={40} color="#86efac" center>
+                                                <Tex tex="\leq_p" />
+                                            </SVGText>
+                                        </>}
+                                    </g>
+                                );
+                            })}
+                            <SVGText x={w/2} y={cBY+cBH+46} width={460} color="#64748b" center>
+                                <Tex tex="\text{Cook-Levin 定理：SAT 是第一个 NP-Complete 问题}" />
+                            </SVGText>
+                        </svg>
+                    )}
+                    <StepButton step={step} setStep={setStep} maxStep={maxStep} label={`Step ${step} / ${maxStep}`} />
+                </div>
+            );
+        };
+
+        const HardnessAnimation = () => {
+            const [step, setStep] = useState(0);
+            const maxStep = 4;
+
+            const labels = useMemo(() => [
+                <span>点击 Next，逐步理解 NP-Hard 与 NP-Complete 的定义</span>,
+                <span><Tex tex="P \subseteq NP" />：NP 包含所有多项式时间可<span className="text-white">验证</span>的问题</span>,
+                <span>若所有 NP 问题均可多项式归约到 <Tex tex="H" />，则 <Tex tex="H" /> 是 NP-Hard</span>,
+                <span>NP-Hard 不要求 <Tex tex="H \in NP" />，可能比 NP 更难，甚至不可判定</span>,
+                <span><Tex tex="H \in NP" /> 且 <Tex tex="H" /> 是 NP-Hard <Tex tex="\Rightarrow" /> <Tex tex="H" /> 是 NP-Complete</span>,
+            ], []);
+
+            // w=480 h=280
+            // NP-Hard: cx=248,cy=148,rx=208,ry=116  → x:40-456, y:32-264
+            // NP:      cx=193,cy=158,rx=143,ry=94   → x:50-336, y:64-252
+            // NPC:     cx=216,cy=116,rx=58,ry=32    → x:158-274, y:84-148
+            // P:       cx=133,cy=200,rx=63,ry=38    → x:70-196, y:162-238
+            // H node:  cx=216,cy=116,r=15           → x:201-231, y:101-131
+            // Labels (SVGText foreignObject spans):
+            //   P       → x:118-148, y:184-214  (inside P, no overlap)
+            //   NP      → x:65-110,  y:96-126   (inside NP, left of NPC)
+            //   H text  → x:201-231, y:100-130  (inside H circle)
+            //   NPC     → x:152-192, y:100-130  (inside NPC ellipse, left of H, gap ≥9px)
+            //   NP-Hard → x:310-420, y:42-72    (inside NP-Hard, outside NP)
+            //   P≠NP    → x:130-350, y:250-280  (bottom, below all ellipses)
+
+            const w = 480, h = 310;
+            const H = { x: 216, y: 116 };
+            const npDots = [{ x: 130, y: 138 }, { x: 182, y: 158 }, { x: 100, y: 158 }];
+
+            return (
+                <div>
+                    <div className="text-base font-mono mb-3 min-h-[2.5em] leading-relaxed" style={{ color: '#c4b5fd' }}>
+                        {labels[step]}
+                    </div>
+                    <svg viewBox={`0 0 ${w} ${h}`} className="w-full max-w-md mx-auto">
+                        <defs>
+                            <marker id="hardArrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                                <path d="M0,0 L0,6 L6,3 z" fill="#fbbf24" />
+                            </marker>
+                        </defs>
+                        {step >= 3 && (
+                            <ellipse cx={248} cy={148} rx={208} ry={116}
+                                fill="rgba(251,191,36,0.06)" stroke="#fbbf24" strokeWidth="1.5" strokeDasharray="4,4" />
+                        )}
+                        {step >= 1 && (
+                            <ellipse cx={193} cy={158} rx={143} ry={94}
+                                fill="rgba(167,139,250,0.07)" stroke="#a78bfa" strokeWidth="1.5" />
+                        )}
+                        {step >= 4 && (
+                            <ellipse cx={216} cy={116} rx={58} ry={32}
+                                fill="rgba(248,113,113,0.15)" stroke="#f87171" strokeWidth="1.5" />
+                        )}
+                        {step >= 1 && (
+                            <ellipse cx={150} cy={200} rx={63} ry={38}
+                                fill="rgba(34,211,238,0.09)" stroke="#22d3ee" strokeWidth="1.5" />
+                        )}
+                        {step >= 2 && npDots.map((dot, i) => (
+                            <g key={i}>
+                                <circle cx={dot.x} cy={dot.y} r={4} fill="#a78bfa" opacity="0.8" />
+                                <line x1={dot.x} y1={dot.y} x2={H.x - 16} y2={H.y + 2}
+                                    stroke="#fbbf24" strokeWidth="1" strokeDasharray="3,2"
+                                    markerEnd="url(#hardArrow)" />
+                            </g>
+                        ))}
+                        {step >= 2 && (
+                            <circle cx={H.x} cy={H.y} r={15}
+                                fill={step >= 4 ? 'rgba(248,113,113,0.3)' : 'rgba(251,191,36,0.2)'}
+                                stroke={step >= 4 ? '#f87171' : '#fbbf24'} strokeWidth="1.5" />
+                        )}
+                        {step >= 1 && <SVGText x={133} y={204} width={30} color="#22d3ee" center><Tex tex="P" /></SVGText>}
+                        {step >= 1 && <SVGText x={92} y={116} width={45} color="#a78bfa" center><Tex tex="NP" /></SVGText>}
+                        {step >= 2 && <SVGText x={H.x} y={H.y + 6} width={30} color={step >= 4 ? '#f87171' : '#fbbf24'} center><Tex tex="H" /></SVGText>}
+                        {step >= 4 && <SVGText x={280} y={160} width={44} color="#f87171" center><Tex tex="NPC" /></SVGText>}
+                        {step >= 3 && <SVGText x={410} y={50} width={110} color="#fbbf24" center><Tex tex="NP\text{-Hard}" /></SVGText>}
+                        {step >= 1 && <SVGText x={w/2} y={300} width={220} color="#475569" center><Tex tex="\text{Assuming } P \neq NP" /></SVGText>}
+                    </svg>
+                    <StepButton step={step} setStep={setStep} maxStep={maxStep} label={`Step ${step} / ${maxStep}`} />
+                </div>
+            );
+        };
+
+        const NPTheoryDiagram = () => {
+            const [hover, setHover] = useState(null);
+            const info = {
+                P:   { title: 'P',           desc: 'Problems solvable in polynomial time',                          examples: 'Sorting, Shortest Path, MST',          color: '#22d3ee' },
+                NP:  { title: 'NP',          desc: 'Problems verifiable in polynomial time',                        examples: 'SAT, Hamiltonian Cycle, TSP',          color: '#a78bfa' },
+                NPC: { title: 'NP-Complete', desc: 'Hardest problems in NP; all NP problems reduce to these',      examples: '3-SAT, Vertex Cover, Clique',          color: '#f87171' },
+                NPH: { title: 'NP-Hard',     desc: 'At least as hard as NP-Complete; may not be in NP',           examples: 'Halting Problem, Optimal TSP',         color: '#fbbf24' },
+            };
+            const w = 460, h = 320;
+            const active = hover ? info[hover] : null;
+            return (
+                <div>
+                    <svg viewBox={`0 0 ${w} ${h}`} className="w-full max-w-md mx-auto">
+                        <ellipse cx={250} cy={160} rx={200} ry={140} fill={hover === 'NPH' ? 'rgba(251,191,36,0.15)' : 'rgba(251,191,36,0.05)'} stroke="#fbbf24" strokeWidth="1.5" strokeDasharray={hover === 'NPH' ? '' : '4,4'} onMouseEnter={() => setHover('NPH')} onMouseLeave={() => setHover(null)} style={{ cursor: 'pointer' }} />
+                        <ellipse cx={220} cy={170} rx={140} ry={110} fill={hover === 'NP' ? 'rgba(167,139,250,0.15)' : 'rgba(167,139,250,0.05)'} stroke="#a78bfa" strokeWidth="1.5" onMouseEnter={() => setHover('NP')} onMouseLeave={() => setHover(null)} style={{ cursor: 'pointer' }} />
+                        <ellipse cx={230} cy={130} rx={70} ry={40} fill={hover === 'NPC' ? 'rgba(248,113,113,0.2)' : 'rgba(248,113,113,0.08)'} stroke="#f87171" strokeWidth="1.5" onMouseEnter={() => setHover('NPC')} onMouseLeave={() => setHover(null)} style={{ cursor: 'pointer' }} />
+                        <ellipse cx={180} cy={210} rx={80} ry={50} fill={hover === 'P' ? 'rgba(34,211,238,0.2)' : 'rgba(34,211,238,0.06)'} stroke="#22d3ee" strokeWidth="1.5" onMouseEnter={() => setHover('P')} onMouseLeave={() => setHover(null)} style={{ cursor: 'pointer' }} />
+                        <text x={180} y={215} fill="#22d3ee" fontSize="16" fontWeight="bold" textAnchor="middle" fontFamily="JetBrains Mono" style={{ pointerEvents: 'none' }}>P</text>
+                        <text x={145} y={175} fill="#a78bfa" fontSize="14" fontWeight="bold" textAnchor="middle" fontFamily="JetBrains Mono" style={{ pointerEvents: 'none' }}>NP</text>
+                        <text x={230} y={135} fill="#f87171" fontSize="11" fontWeight="bold" textAnchor="middle" fontFamily="JetBrains Mono" style={{ pointerEvents: 'none' }}>NP-Complete</text>
+                        <text x={380} y={60} fill="#fbbf24" fontSize="12" fontWeight="bold" textAnchor="middle" fontFamily="JetBrains Mono" style={{ pointerEvents: 'none' }}>NP-Hard</text>
+                        <text x={w/2} y={h - 5} fill="#475569" fontSize="9" textAnchor="middle" fontFamily="JetBrains Mono" style={{ pointerEvents: 'none' }}>Assuming P ≠ NP</text>
+                    </svg>
+                    {active && (
+                        <div className="mt-3 p-3 rounded-lg bg-slate-900/80 border border-white/10">
+                            <div className="font-bold text-white mb-1" style={{ color: active.color }}>{active.title}</div>
+                            <div className="text-base text-slate-400">{active.desc}</div>
+                            <div className="text-base text-slate-500 mt-1">Examples: {active.examples}</div>
+                        </div>
+                    )}
+                    {!active && <div className="mt-3 text-base text-slate-500 text-center font-mono">Hover over a region to see details</div>}
+                </div>
+            );
+        };
+
+        const NPSection = () => {
+            const [activeCard, setActiveCard] = useState('complexity');
+            const toggle = (id) => setActiveCard(prev => prev === id ? null : id);
+
+            return (
+                <section id="np" className="py-20">
+                    <div className="container mx-auto px-6">
+                        <SectionHeader title="NP理论" subtitle="NP THEORY" />
+                        <div className="grid lg:grid-cols-[3fr_7fr] gap-8">
+                            <div className="space-y-4">
+                                <KnowledgeCard title="基本复杂度类" active={activeCard === 'complexity'} onClick={() => toggle('complexity')}>
+                                </KnowledgeCard>
+                                <KnowledgeCard title="问题的难度等级" active={activeCard === 'hardness'} onClick={() => toggle('hardness')}>
+                                </KnowledgeCard>
+                                <KnowledgeCard title="多项式时间归约" active={activeCard === 'reduction'} onClick={() => toggle('reduction')}>
+                                </KnowledgeCard>
+                                <KnowledgeCard title="经典NP-Complete问题" active={activeCard === 'classic'} onClick={() => toggle('classic')}>
+                                </KnowledgeCard>
+                            </div>
+                            <div className="glass-panel p-6 rounded-xl">
+                                {activeCard === 'complexity' ? (
+                                    <>
+                                        <h4 className="text-white font-bold mb-4">P vs NP — 求解 与 验证</h4>
+                                        <div className="grid grid-cols-[4fr_6fr] gap-4 mb-5 text-slate-400">
+                                            <div>
+                                                <div className="text-cyan-400 font-mono font-bold text-base mb-1">P (Polynomial Time)</div>
+                                                <div className="text-base space-y-0.5">
+                                                    <div><span className="text-slate-500">定义：</span>所有可以在多项式时间内<span className="text-white">求解</span>的问题集合。</div>
+                                                    <div><span className="text-slate-500">特征：</span>这些问题被认为是"易解"的（Tractable）。</div>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div className="text-violet-400 font-mono font-bold text-base mb-1">NP (Nondeterministic Polynomial Time)</div>
+                                                <div className="text-base space-y-0.5">
+                                                    <div><span className="text-slate-500">定义：</span>所有可以在多项式时间内<span className="text-white">验证</span>一个解的正确性的问题集合。</div>
+                                                    <div><span className="text-slate-500">误区：</span>NP 并不代表"非多项式时间"，而是指"非确定性多项式时间"。</div>
+                                                    <div><span className="text-slate-500">特征：</span>如果给一个答案，能很快检查它对不对，但未必能很快找到这个答案。</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <PNPAnimation />
+                                    </>
+                                ) : activeCard === 'hardness' ? (
+                                    <>
+                                        <h4 className="text-white font-bold mb-4">NP-Hard 与 NP-Complete</h4>
+                                        <div className="grid grid-cols-2 gap-4 mb-5 text-slate-400">
+                                            <div>
+                                                <div className="text-yellow-400 font-mono font-bold text-base mb-1">NP-Hard (NP 困难)</div>
+                                                <div className="text-base space-y-0.5">
+                                                    <div><span className="text-slate-500">定义：</span>如果所有 NP 问题都可以归约到问题 <Tex tex="H" />，则 <Tex tex="H" /> 是 NP-Hard。</div>
+                                                    <div><span className="text-slate-500">特征：</span>NP-Hard 至少与 NP 中最难的问题一样难。本身不一定属于 NP（可能更难，甚至不可解）。</div>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div className="text-red-400 font-mono font-bold text-base mb-1">NP-Complete (NP 完全, NPC)</div>
+                                                <div className="text-base space-y-0.5">
+                                                    <div><span className="text-slate-500">定义：</span>如果一个问题既属于 NP，又是 NP-Hard，则它是 NP-Complete。</div>
+                                                    <div><span className="text-slate-500">特征：</span>它们是 NP 中最难的问题。若任意一个 NPC 问题有多项式解，则 <Tex tex="P = NP" />。</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <HardnessAnimation />
+                                    </>
+                                ) : activeCard === 'reduction' ? (
+                                    <>
+                                        <h4 className="text-white font-bold mb-4">多项式时间归约</h4>
+                                        <div className="grid grid-cols-2 gap-4 mb-5 text-slate-400">
+                                            <div>
+                                                <div className="text-green-400 font-mono font-bold text-base mb-1">定义与逻辑</div>
+                                                <div className="text-base space-y-0.5">
+                                                    <div><span className="text-slate-500">定义：</span>若存在多项式时间可计算的函数 <Tex tex="f" />，使得 <Tex tex="x \in A \iff f(x) \in B" />，则 <Tex tex="A \leq_p B" />（A 归约到 B）。</div>
+                                                    <div><span className="text-slate-500">逻辑：</span>B 易解 → A 易解；A 难解 → B 难解（对偶命题）。</div>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div className="text-green-400 font-mono font-bold text-base mb-1">直观理解与用途</div>
+                                                <div className="text-base space-y-0.5">
+                                                    <div><span className="text-slate-500">直观：</span>归约是一种"能力的借用"，能解 B 就能解 A。</div>
+                                                    <div><span className="text-slate-500">用途：</span>证明新问题是 NP-Hard，需找已知 NPC 问题 <Tex tex="A" />，证明 <Tex tex="A \leq_p" /> 新问题。</div>
+                                                    <div><span className="text-slate-500">Cook-Levin：</span>SAT 是第一个 NPC 问题，确立了归约链的起点。</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <ReductionAnimation />
+                                    </>
+                                ) : (
+                                    <>
+                                        <h4 className="text-white font-bold mb-4">P / NP / NPC / NP-Hard</h4>
+                                        <NPTheoryDiagram />
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        const App = () => {
+            const [scrolled, setScrolled] = useState(false);
+            const [mobileNav, setMobileNav] = useState(false);
+            const currentId = 'np';
+
+            useEffect(() => {
+                const handleScroll = () => setScrolled(window.scrollY > 50);
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            return (
+                <div className="min-h-screen font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
+                    <BackgroundCanvas />
+                    <nav className={`fixed top-0 w-full z-50 transition-all duration-300 border-b border-white/5 backdrop-blur-md ${scrolled ? 'bg-slate-950/80 py-3' : 'bg-transparent py-5'}`}>
+                        <div className="container mx-auto px-6 flex justify-between items-center">
+                            <a href="algorithm.html" className="flex items-center gap-2 text-slate-400 hover:text-cyan-400 transition-colors no-underline group">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                <span className="font-mono text-sm">Back to Course</span>
+                            </a>
+                            <div className="hidden lg:flex gap-4">
+                                {sections.map((s) => (
+                                    <a key={s.id} href={`${s.id}.html`} className={`text-xs font-mono transition-colors no-underline ${s.id === currentId ? 'text-cyan-400' : 'text-slate-500 hover:text-cyan-400'}`}>
+                                        <span className="text-cyan-600">{s.num}</span> {s.titleEn}
+                                    </a>
+                                ))}
+                            </div>
+                            <button className="lg:hidden text-slate-400 hover:text-white" onClick={() => setMobileNav(!mobileNav)}>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                            </button>
+                        </div>
+                        {mobileNav && (
+                            <div className="lg:hidden bg-slate-950/95 border-t border-white/5 px-6 py-4 space-y-2">
+                                {sections.map((s) => (
+                                    <a key={s.id} href={`${s.id}.html`} className={`block text-sm font-mono transition-colors no-underline py-1 ${s.id === currentId ? 'text-cyan-400' : 'text-slate-400 hover:text-cyan-400'}`} onClick={() => setMobileNav(false)}>
+                                        <span className="text-cyan-600">{s.num}</span> {s.title}
+                                    </a>
+                                ))}
+                            </div>
+                        )}
+                    </nav>
+                    <NPSection />
+                    <footer className="py-12 border-t border-white/5 bg-black/40 backdrop-blur-md">
+                        <div className="container mx-auto px-6 text-center">
+                            <p className="text-sm text-gray-600 font-mono">
+                                © {new Date().getFullYear()} Dingming Wu. Algorithm Design and Analysis Course Material.
+                            </p>
+                        </div>
+                    </footer>
+                </div>
+            );
+        };
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>

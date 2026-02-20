@@ -98,44 +98,44 @@
 
         const publicationsData = {
             journals: [
-                { id: "J20", title: "GREAT: Generalized Reservoir Sampling based Triangle Counting Estimation over Streaming Graphs", venue: "Proc. VLDB Endow. 18(7)", year: "2025", authors: "Siyue Wu, Dingming Wu, Sinhong Cheuk, Tsz Nam Chan, Kezhong Lu", pdf: "p2031-wu.pdf" },
-                { id: "J19", title: "Efficient and Accurate PageRank Approximation on Large Graphs", venue: "Proc. ACM Manag. Data 2(4)", year: "2024", authors: "Siyue Wu, Dingming Wu, Junyi Quan, Tsz Nam Chan, Kezhong Lu", pdf: "3677132.pdf" },
-                { id: "J18", title: "LION: Fast and High-Resolution Network Kernel Density Visualization", venue: "Proc. VLDB Endow. 17(6)", year: "2024", authors: "Tsz Nam Chan, Rui Zang, Bojian Zhu, Leong Hou U, Dingming Wu, Jianliang Xu", pdf: "3648160.3648168.pdf" },
-                { id: "J17", title: "LARGE: A Length-Aggregation-based Grid Structure for Line Density Visualization", venue: "Proc. VLDB Endow. 17(13)", year: "2024", authors: "Tsz Nam Chan, Bojian Zhu, Dingming Wu, Yun Peng, Leong Hou U", pdf: "p4585-chan.pdf" },
-                { id: "J16", title: "Efficient Skyline Keyword-Based Tree Retrieval on Attributed Graphs", venue: "IEEE Trans. Knowl. Data Eng. 36(11)", year: "2024", authors: "Dingming Wu, Zhaofen Zhang, Christian S. Jensen, Kezhong Lu", pdf: "Efficient_Skyline_Keyword-Based_Tree_Retrieval_on_Attributed_Graphs.pdf" },
-                { id: "J15", title: "Efficient Retrieval of the Top-k Most Relevant Event-Partner Pairs", venue: "IEEE Trans. Knowl. Data Eng. 35(3)", year: "2023", authors: "Dingming Wu, Erjia Xiao, Yi Zhu, Christian S. Jensen, Kezhong Lu", pdf: "Efficient_Retrieval_of_the_Top-k_Most_Relevant_Event-Partner_Pairs.pdf" },
-                { id: "J14", title: "Density-Based Top-K Spatial Textual Clusters Retrieval", venue: "IEEE Trans. Knowl. Data Eng. 34(11)", year: "2022", authors: "Dingming Wu, Ilkcan Keles, Song Wu, Hao Zhou, Simonas Saltenis, Christian S. Jensen, Kezhong Lu", pdf: "Density-Based_Top-K_Spatial_Textual_Clusters_Retrieval.pdf" },
-                { id: "J13", title: "Top-k relevant semantic place retrieval on spatiotemporal RDF data", venue: "VLDB J. 29(4)", year: "2020", authors: "Dingming Wu, Hao Zhou, Jieming Shi, Nikos Mamoulis", pdf: "s00778-019-00591-8.pdf" },
-                { id: "J12", title: "Density-Based Place Clustering Using Geo-Social Network Data", venue: "IEEE Trans. Knowl. Data Eng. 30(5)", year: "2018", authors: "Dingming Wu, Jieming Shi, Nikos Mamoulis", pdf: "Density-Based_Place_Clustering_Using_Geo-Social_Network_Data.pdf" },
-                { id: "J11", title: "Location Aware Keyword Query Suggestion Based on Document Proximity", venue: "IEEE Trans. Knowl. Data Eng. 28(1)", year: "2016", authors: "Shuyao Qi, Dingming Wu, Nikos Mamoulis", pdf: "Location_Aware_Keyword_Query_Suggestion_Based_on_Document_Proximity.pdf" },
-                { id: "J10", title: "Textually Relevant Spatial Skylines", venue: "IEEE Trans. Knowl. Data Eng. (TKDE) 28(1)", year: "2016", authors: "Jieming Shi, Dingming Wu, Nikos Mamoulis", pdf: "Textually_Relevant_Spatial_Skylines.pdf" },
-                { id: "J9", title: "Clustering in Geo-Social Networks", venue: "IEEE Data Eng. Bull. 38(2)", year: "2015", authors: "Dingming Wu, Nikos Mamoulis, Jieming Shi", pdf: "p47.pdf" },
-                { id: "J8", title: "Authentication of Moving Top-k Spatial Keyword Queries", venue: "IEEE Trans. Knowl. Data Eng. 27(4)", year: "2015", authors: "Dingming Wu, Byron Choi, Jianliang Xu, Christian S. Jensen", pdf: "Authentication_of_Moving_Top-k_Spatial_Keyword_Queries.pdf" },
-                { id: "J7", title: "Spatial-aware interest group queries in location-based social networks", venue: "Data Knowl. Eng. 92", year: "2014", authors: "Yafei Li, Dingming Wu, Jianliang Xu, Byron Choi, Weifeng Su", pdf: "1-s2.0-S0169023X14000585-main.pdf" },
-                { id: "J6", title: "Spatial Keyword Query Processing: An Experimental Evaluation", venue: "Proc. VLDB Endow. 6(3)", year: "2013", authors: "Lisi Chen, Gao Cong, Christian S. Jensen, Dingming Wu", pdf: "2535569.2448955.pdf" },
-                { id: "J5", title: "Moving spatial keyword queries: Formulation, methods, and analysis", venue: "ACM Trans. Database Syst. 38(1)", year: "2013", authors: "Dingming Wu, Man Lung Yiu, Christian S. Jensen", pdf: "2445583.2445590.pdf" },
-                { id: "J4", title: "SWORS: A System for the Efficient Retrieval of Relevant Spatial Web Objects", venue: "Proc. VLDB Endow. 5(12)", year: "2012", authors: "Xin Cao, Gao Cong, Christian S. Jensen, Jun Jie Ng, Beng Chin Ooi, Nhan-Tue Phan, Dingming Wu", pdf: "vldb12swors.pdf" },
-                { id: "J3", title: "Joint Top-K Spatial Keyword Query Processing", venue: "IEEE Trans. Knowl. Data Eng. 24(10)", year: "2012", authors: "Dingming Wu, Man Lung Yiu, Gao Cong, Christian S. Jensen", pdf: "Joint_Top-K_Spatial_Keyword_Query_Processing.pdf" },
-                { id: "J2", title: "A framework for efficient spatial web object retrieval", venue: "VLDB J. 21(6)", year: "2012", authors: "Dingming Wu, Gao Cong, Christian S. Jensen", pdf: "s00778-012-0271-0.pdf" },
-                { id: "J1", title: "Efficient Retrieval of the Top-k Most Relevant Spatial Web Objects", venue: "Proc. VLDB Endow. 2(1)", year: "2009", authors: "Gao Cong, Christian S. Jensen, Dingming Wu", pdf: "1687627.1687666.pdf" }
+                { id: "J20", title: "GREAT: Generalized Reservoir Sampling based Triangle Counting Estimation over Streaming Graphs", venue: "Proc. VLDB Endow. 18(7)", year: "2025", authors: "Siyue Wu, Dingming Wu, Sinhong Cheuk, Tsz Nam Chan, Kezhong Lu", pdf: "pdf/p2031-wu.pdf" },
+                { id: "J19", title: "Efficient and Accurate PageRank Approximation on Large Graphs", venue: "Proc. ACM Manag. Data 2(4)", year: "2024", authors: "Siyue Wu, Dingming Wu, Junyi Quan, Tsz Nam Chan, Kezhong Lu", pdf: "pdf/3677132.pdf" },
+                { id: "J18", title: "LION: Fast and High-Resolution Network Kernel Density Visualization", venue: "Proc. VLDB Endow. 17(6)", year: "2024", authors: "Tsz Nam Chan, Rui Zang, Bojian Zhu, Leong Hou U, Dingming Wu, Jianliang Xu", pdf: "pdf/3648160.3648168.pdf" },
+                { id: "J17", title: "LARGE: A Length-Aggregation-based Grid Structure for Line Density Visualization", venue: "Proc. VLDB Endow. 17(13)", year: "2024", authors: "Tsz Nam Chan, Bojian Zhu, Dingming Wu, Yun Peng, Leong Hou U", pdf: "pdf/p4585-chan.pdf" },
+                { id: "J16", title: "Efficient Skyline Keyword-Based Tree Retrieval on Attributed Graphs", venue: "IEEE Trans. Knowl. Data Eng. 36(11)", year: "2024", authors: "Dingming Wu, Zhaofen Zhang, Christian S. Jensen, Kezhong Lu", pdf: "pdf/Efficient_Skyline_Keyword-Based_Tree_Retrieval_on_Attributed_Graphs.pdf" },
+                { id: "J15", title: "Efficient Retrieval of the Top-k Most Relevant Event-Partner Pairs", venue: "IEEE Trans. Knowl. Data Eng. 35(3)", year: "2023", authors: "Dingming Wu, Erjia Xiao, Yi Zhu, Christian S. Jensen, Kezhong Lu", pdf: "pdf/Efficient_Retrieval_of_the_Top-k_Most_Relevant_Event-Partner_Pairs.pdf" },
+                { id: "J14", title: "Density-Based Top-K Spatial Textual Clusters Retrieval", venue: "IEEE Trans. Knowl. Data Eng. 34(11)", year: "2022", authors: "Dingming Wu, Ilkcan Keles, Song Wu, Hao Zhou, Simonas Saltenis, Christian S. Jensen, Kezhong Lu", pdf: "pdf/Density-Based_Top-K_Spatial_Textual_Clusters_Retrieval.pdf" },
+                { id: "J13", title: "Top-k relevant semantic place retrieval on spatiotemporal RDF data", venue: "VLDB J. 29(4)", year: "2020", authors: "Dingming Wu, Hao Zhou, Jieming Shi, Nikos Mamoulis", pdf: "pdf/s00778-019-00591-8.pdf" },
+                { id: "J12", title: "Density-Based Place Clustering Using Geo-Social Network Data", venue: "IEEE Trans. Knowl. Data Eng. 30(5)", year: "2018", authors: "Dingming Wu, Jieming Shi, Nikos Mamoulis", pdf: "pdf/Density-Based_Place_Clustering_Using_Geo-Social_Network_Data.pdf" },
+                { id: "J11", title: "Location Aware Keyword Query Suggestion Based on Document Proximity", venue: "IEEE Trans. Knowl. Data Eng. 28(1)", year: "2016", authors: "Shuyao Qi, Dingming Wu, Nikos Mamoulis", pdf: "pdf/Location_Aware_Keyword_Query_Suggestion_Based_on_Document_Proximity.pdf" },
+                { id: "J10", title: "Textually Relevant Spatial Skylines", venue: "IEEE Trans. Knowl. Data Eng. (TKDE) 28(1)", year: "2016", authors: "Jieming Shi, Dingming Wu, Nikos Mamoulis", pdf: "pdf/Textually_Relevant_Spatial_Skylines.pdf" },
+                { id: "J9", title: "Clustering in Geo-Social Networks", venue: "IEEE Data Eng. Bull. 38(2)", year: "2015", authors: "Dingming Wu, Nikos Mamoulis, Jieming Shi", pdf: "pdf/p47.pdf" },
+                { id: "J8", title: "Authentication of Moving Top-k Spatial Keyword Queries", venue: "IEEE Trans. Knowl. Data Eng. 27(4)", year: "2015", authors: "Dingming Wu, Byron Choi, Jianliang Xu, Christian S. Jensen", pdf: "pdf/Authentication_of_Moving_Top-k_Spatial_Keyword_Queries.pdf" },
+                { id: "J7", title: "Spatial-aware interest group queries in location-based social networks", venue: "Data Knowl. Eng. 92", year: "2014", authors: "Yafei Li, Dingming Wu, Jianliang Xu, Byron Choi, Weifeng Su", pdf: "pdf/1-s2.0-S0169023X14000585-main.pdf" },
+                { id: "J6", title: "Spatial Keyword Query Processing: An Experimental Evaluation", venue: "Proc. VLDB Endow. 6(3)", year: "2013", authors: "Lisi Chen, Gao Cong, Christian S. Jensen, Dingming Wu", pdf: "pdf/2535569.2448955.pdf" },
+                { id: "J5", title: "Moving spatial keyword queries: Formulation, methods, and analysis", venue: "ACM Trans. Database Syst. 38(1)", year: "2013", authors: "Dingming Wu, Man Lung Yiu, Christian S. Jensen", pdf: "pdf/2445583.2445590.pdf" },
+                { id: "J4", title: "SWORS: A System for the Efficient Retrieval of Relevant Spatial Web Objects", venue: "Proc. VLDB Endow. 5(12)", year: "2012", authors: "Xin Cao, Gao Cong, Christian S. Jensen, Jun Jie Ng, Beng Chin Ooi, Nhan-Tue Phan, Dingming Wu", pdf: "pdf/vldb12swors.pdf" },
+                { id: "J3", title: "Joint Top-K Spatial Keyword Query Processing", venue: "IEEE Trans. Knowl. Data Eng. 24(10)", year: "2012", authors: "Dingming Wu, Man Lung Yiu, Gao Cong, Christian S. Jensen", pdf: "pdf/Joint_Top-K_Spatial_Keyword_Query_Processing.pdf" },
+                { id: "J2", title: "A framework for efficient spatial web object retrieval", venue: "VLDB J. 21(6)", year: "2012", authors: "Dingming Wu, Gao Cong, Christian S. Jensen", pdf: "pdf/s00778-012-0271-0.pdf" },
+                { id: "J1", title: "Efficient Retrieval of the Top-k Most Relevant Spatial Web Objects", venue: "Proc. VLDB Endow. 2(1)", year: "2009", authors: "Gao Cong, Christian S. Jensen, Dingming Wu", pdf: "pdf/1687627.1687666.pdf" }
             ],
             conferences: [
-                { id: "C16", title: "Large-Scale Spatiotemporal Kernel Density Visualization", venue: "ICDE", year: "2025", authors: "Tsz Nam Chan, Pak Lon Ip, Bojian Zhu, Leong Hou U, Dingming Wu, Jianliang Xu, Christian S. Jensen", pdf: "Large-Scale_Spatiotemporal_Kernel_Density_Visualization.pdf" },
-                { id: "C15", title: "Spatially Compact Dense Block Mining in Spatial Tensors", venue: "KDD", year: "2025", authors: "Weike Tang, Dingming Wu, Tsz Nam Chan, Kezhong Lu", pdf: "3690624.3709221.pdf" },
-                { id: "C14", title: "A Fast Line Density Visualization Plugin for Geographic Information Systems", venue: "SIGMOD (Companion)", year: "2025", authors: "Tsz Nam Chan, Bojian Zhu, Dingming Wu, Yun Peng, Leong Hou U, Wei Tu, Ruisheng Wang", pdf: "3722212.3725075.pdf" },
-                { id: "C13", title: "A Re-evaluation of Deep Learning Methods for Attributed Graph Clustering", venue: "CIKM", year: "2023", authors: "Xinying Lai, Dingming Wu, Christian S. Jensen, Kezhong Lu", pdf: "3583780.3614768.pdf" },
-                { id: "C12", title: "Semantic Region Retrieval from Spatial RDF Data", venue: "DASFAA", year: "2020", authors: "Dingming Wu, Can Hou, Erjia Xiao, Christian S. Jensen", pdf: "978-3-030-59416-9_25.pdf" },
-                { id: "C11", title: "Efficiently Mining Maximal Diverse Frequent Itemsets", venue: "DASFAA", year: "2019", authors: "Dingming Wu, Dexin Luo, Christian S. Jensen, Joshua Zhexue Huang", pdf: "978-3-030-18579-4_12.pdf" },
-                { id: "C10", title: "In Good Company: Efficient Retrieval of the Top-k Most Relevant Event-Partner Pairs", venue: "DASFAA", year: "2019", authors: "Dingming Wu, Yi Zhu, Christian S. Jensen", pdf: "978-3-030-18579-4_31.pdf" },       
-                { id: "C9", title: "A Density-Based Approach to the Retrieval of Top-K Spatial Textual Clusters", venue: "CIKM", year: "2016", authors: "Dingming Wu, Christian S. Jensen", pdf: "2983323.2983648.pdf" },
-                { id: "C8", title: "Top-k Relevant Semantic Place Retrieval on Spatial RDF Data", venue: "SIGMOD", year: "2016", authors: "Jieming Shi, Dingming Wu, Nikos Mamoulis", pdf: "2882903.2882941.pdf" },
-                { id: "C7", title: "Overlapping Community Regularization for Rating Prediction in Social Recommender Systems", venue: "RecSys", year: "2015", authors: "Hui Li, Dingming Wu, Wenbin Tang, Nikos Mamoulis", pdf: "2792838.2800171.pdf" },
-                { id: "C6", title: "Efficient Top-k Subscription Matching for Location-Aware Publish/Subscribe", venue: "SSTD", year: "2015", authors: "Jiafeng Hu, Reynold Cheng, Dingming Wu, Beihong Jin", pdf: "p978-3-319-22363-6_18.pdf" },
-                { id: "C5", title: "Social-Aware Top-k Spatial Keyword Search", venue: "MDM", year: "2014", authors: "Dingming Wu, Yafei Li, Byron Choi, Jianliang Xu", pdf: "Social-Aware_Top-k_Spatial_Keyword_Search.pdf" },
-                { id: "C4", title: "A revisit to social network-based recommender systems", venue: "SIGIR", year: "2014", authors: "Hui Li, Dingming Wu, Nikos Mamoulis", pdf: "2600428.2609554.pdf" },
-                { id: "C3", title: "Density-based place clustering in geo-social networks", venue: "SIGMOD", year: "2014", authors: "Jieming Shi, Nikos Mamoulis, Dingming Wu, David W. Cheung", pdf: "2588555.2610497.pdf" },
-                { id: "C2", title: "Spatial-aware interest group queries in location-based social networks", venue: "CIKM", year: "2012", authors: "Yafei Li, Dingming Wu, Jianliang Xu, Byron Choi, Weifeng Su", pdf: "2396761.2398713.pdf" },
-                { id: "C1", title: "Efficient continuously moving top-k spatial keyword query processing", venue: "ICDE", year: "2011", authors: "Dingming Wu, Man Lung Yiu, Christian S. Jensen, Gao Cong", pdf: "Efficient_continuously_moving_top-k_spatial_keyword_query_processing.pdf" }
+                { id: "C16", title: "Large-Scale Spatiotemporal Kernel Density Visualization", venue: "ICDE", year: "2025", authors: "Tsz Nam Chan, Pak Lon Ip, Bojian Zhu, Leong Hou U, Dingming Wu, Jianliang Xu, Christian S. Jensen", pdf: "pdf/Large-Scale_Spatiotemporal_Kernel_Density_Visualization.pdf" },
+                { id: "C15", title: "Spatially Compact Dense Block Mining in Spatial Tensors", venue: "KDD", year: "2025", authors: "Weike Tang, Dingming Wu, Tsz Nam Chan, Kezhong Lu", pdf: "pdf/3690624.3709221.pdf" },
+                { id: "C14", title: "A Fast Line Density Visualization Plugin for Geographic Information Systems", venue: "SIGMOD (Companion)", year: "2025", authors: "Tsz Nam Chan, Bojian Zhu, Dingming Wu, Yun Peng, Leong Hou U, Wei Tu, Ruisheng Wang", pdf: "pdf/3722212.3725075.pdf" },
+                { id: "C13", title: "A Re-evaluation of Deep Learning Methods for Attributed Graph Clustering", venue: "CIKM", year: "2023", authors: "Xinying Lai, Dingming Wu, Christian S. Jensen, Kezhong Lu", pdf: "pdf/3583780.3614768.pdf" },
+                { id: "C12", title: "Semantic Region Retrieval from Spatial RDF Data", venue: "DASFAA", year: "2020", authors: "Dingming Wu, Can Hou, Erjia Xiao, Christian S. Jensen", pdf: "pdf/978-3-030-59416-9_25.pdf" },
+                { id: "C11", title: "Efficiently Mining Maximal Diverse Frequent Itemsets", venue: "DASFAA", year: "2019", authors: "Dingming Wu, Dexin Luo, Christian S. Jensen, Joshua Zhexue Huang", pdf: "pdf/978-3-030-18579-4_12.pdf" },
+                { id: "C10", title: "In Good Company: Efficient Retrieval of the Top-k Most Relevant Event-Partner Pairs", venue: "DASFAA", year: "2019", authors: "Dingming Wu, Yi Zhu, Christian S. Jensen", pdf: "pdf/978-3-030-18579-4_31.pdf" },       
+                { id: "C9", title: "A Density-Based Approach to the Retrieval of Top-K Spatial Textual Clusters", venue: "CIKM", year: "2016", authors: "Dingming Wu, Christian S. Jensen", pdf: "pdf/2983323.2983648.pdf" },
+                { id: "C8", title: "Top-k Relevant Semantic Place Retrieval on Spatial RDF Data", venue: "SIGMOD", year: "2016", authors: "Jieming Shi, Dingming Wu, Nikos Mamoulis", pdf: "pdf/2882903.2882941.pdf" },
+                { id: "C7", title: "Overlapping Community Regularization for Rating Prediction in Social Recommender Systems", venue: "RecSys", year: "2015", authors: "Hui Li, Dingming Wu, Wenbin Tang, Nikos Mamoulis", pdf: "pdf/2792838.2800171.pdf" },
+                { id: "C6", title: "Efficient Top-k Subscription Matching for Location-Aware Publish/Subscribe", venue: "SSTD", year: "2015", authors: "Jiafeng Hu, Reynold Cheng, Dingming Wu, Beihong Jin", pdf: "pdf/p978-3-319-22363-6_18.pdf" },
+                { id: "C5", title: "Social-Aware Top-k Spatial Keyword Search", venue: "MDM", year: "2014", authors: "Dingming Wu, Yafei Li, Byron Choi, Jianliang Xu", pdf: "pdf/Social-Aware_Top-k_Spatial_Keyword_Search.pdf" },
+                { id: "C4", title: "A revisit to social network-based recommender systems", venue: "SIGIR", year: "2014", authors: "Hui Li, Dingming Wu, Nikos Mamoulis", pdf: "pdf/2600428.2609554.pdf" },
+                { id: "C3", title: "Density-based place clustering in geo-social networks", venue: "SIGMOD", year: "2014", authors: "Jieming Shi, Nikos Mamoulis, Dingming Wu, David W. Cheung", pdf: "pdf/2588555.2610497.pdf" },
+                { id: "C2", title: "Spatial-aware interest group queries in location-based social networks", venue: "CIKM", year: "2012", authors: "Yafei Li, Dingming Wu, Jianliang Xu, Byron Choi, Weifeng Su", pdf: "pdf/2396761.2398713.pdf" },
+                { id: "C1", title: "Efficient continuously moving top-k spatial keyword query processing", venue: "ICDE", year: "2011", authors: "Dingming Wu, Man Lung Yiu, Christian S. Jensen, Gao Cong", pdf: "pdf/Efficient_continuously_moving_top-k_spatial_keyword_query_processing.pdf" }
             ]
         };
 
@@ -599,15 +599,15 @@
                         <div className="container mx-auto px-6">
                             <SectionHeader title="Patents" subtitle="INTELLECTUAL PROPERTY" />
                             <div className="mt-8 grid gap-4">
-                                <PatentItem id="ZL 202510733555.5" title="A Method, System, Terminal, and Storage for Distribution-and-Aggregation-based Spatiotemporal K-function Plot Generation" date="Aug 12, 2025" authors="Tsz Nam Chan, Bojian Zhu, Dingming Wu, Renchi Yang, Ruisheng Wang" pdf="2025107335555.pdf" />
-                                <PatentItem id="ZL 202510696033.2" title="A Method, System, Terminal, and Storage for Block-Compression-based Spatiotemporal Kernel Density Visualization" date="Aug 5, 2025" authors="Tsz Nam Chan, Yue Zhong, Leong Hou U, Dingming Wu, Wei Tu, Ruisheng Wang, Joshua Zhexue Huang" pdf="2025106960332.pdf" />
-                                <PatentItem id="ZL 202411977346.7" title="A Method, System, and Terminal for Spatiotemporal Kernel Density Visualization via PREFIX-Matrix Structure" date="May 16, 2025" authors="Tsz Nam Chan, Pak Lon Ip, Bojian Zhu, Leong Hou U, Dingming Wu, Jianliang Xu, Christian S. Jensen" pdf="2024119773467.pdf" />
-                                <PatentItem id="ZL 202411529099.4" title="A Method and System for Generating Line Density Visualization via Length-Aggregation-based Grid Structure" date="Mar 18, 2025" authors="Tsz Nam Chan, Bojian Zhu, Dingming Wu, Yun Peng, Leong Hou U" pdf="2024115290994.pdf" />
-                                <PatentItem id="ZL 202310430972.3" title="A Frequent Subgraph Mining Method and Terminal Device" date="Nov 28, 2023" authors="Zhaofen Zhang, Dingming Wu, Yixin Wu, Kezhong Lu, Zhexue Huang" pdf="20231128.pdf" />
-                                <PatentItem id="ZL 202111472336.4" title="Knowledge Graph Embedding Model Training Method, Device, Electronic Equipment, and Medium" date="May 20, 2022" authors="Dingming Wu, Yuqi Zhou, Kezhong Lu, Jinying Zhan" pdf="20220520.pdf" />
-                                <PatentItem id="ZL 202210026117.1" title="Skyline Position Node Query Method, Device, and Equipment in RDF Data" date="May 17, 2022" authors="Dingming Wu, Zhaofen Zhang, Kezhong Lu" pdf="20220517.pdf" />
-                                <PatentItem id="ZL 201810294059.4" title="An Activity-and-Partner Retrieval Method and System" date="Aug 6, 2021" authors="Dingming Wu, Yi Zhu, Zhexue Huang" pdf="20210806.pdf" />
-                                <PatentItem id="ZL 201710821358.4" title="Mining Method and Device for Maximum Diverse Frequent Patterns Based on Classification Trees" date="Dec 4, 2020" authors="Dingming Wu, Dexin Luo, Zhexue Huang" pdf="20201204.pdf" />
+                                <PatentItem id="ZL 202510733555.5" title="A Method, System, Terminal, and Storage for Distribution-and-Aggregation-based Spatiotemporal K-function Plot Generation" date="Aug 12, 2025" authors="Tsz Nam Chan, Bojian Zhu, Dingming Wu, Renchi Yang, Ruisheng Wang" pdf="pdf/2025107335555.pdf" />
+                                <PatentItem id="ZL 202510696033.2" title="A Method, System, Terminal, and Storage for Block-Compression-based Spatiotemporal Kernel Density Visualization" date="Aug 5, 2025" authors="Tsz Nam Chan, Yue Zhong, Leong Hou U, Dingming Wu, Wei Tu, Ruisheng Wang, Joshua Zhexue Huang" pdf="pdf/2025106960332.pdf" />
+                                <PatentItem id="ZL 202411977346.7" title="A Method, System, and Terminal for Spatiotemporal Kernel Density Visualization via PREFIX-Matrix Structure" date="May 16, 2025" authors="Tsz Nam Chan, Pak Lon Ip, Bojian Zhu, Leong Hou U, Dingming Wu, Jianliang Xu, Christian S. Jensen" pdf="pdf/2024119773467.pdf" />
+                                <PatentItem id="ZL 202411529099.4" title="A Method and System for Generating Line Density Visualization via Length-Aggregation-based Grid Structure" date="Mar 18, 2025" authors="Tsz Nam Chan, Bojian Zhu, Dingming Wu, Yun Peng, Leong Hou U" pdf="pdf/2024115290994.pdf" />
+                                <PatentItem id="ZL 202310430972.3" title="A Frequent Subgraph Mining Method and Terminal Device" date="Nov 28, 2023" authors="Zhaofen Zhang, Dingming Wu, Yixin Wu, Kezhong Lu, Zhexue Huang" pdf="pdf/20231128.pdf" />
+                                <PatentItem id="ZL 202111472336.4" title="Knowledge Graph Embedding Model Training Method, Device, Electronic Equipment, and Medium" date="May 20, 2022" authors="Dingming Wu, Yuqi Zhou, Kezhong Lu, Jinying Zhan" pdf="pdf/20220520.pdf" />
+                                <PatentItem id="ZL 202210026117.1" title="Skyline Position Node Query Method, Device, and Equipment in RDF Data" date="May 17, 2022" authors="Dingming Wu, Zhaofen Zhang, Kezhong Lu" pdf="pdf/20220517.pdf" />
+                                <PatentItem id="ZL 201810294059.4" title="An Activity-and-Partner Retrieval Method and System" date="Aug 6, 2021" authors="Dingming Wu, Yi Zhu, Zhexue Huang" pdf="pdf/20210806.pdf" />
+                                <PatentItem id="ZL 201710821358.4" title="Mining Method and Device for Maximum Diverse Frequent Patterns Based on Classification Trees" date="Dec 4, 2020" authors="Dingming Wu, Dexin Luo, Zhexue Huang" pdf="pdf/20201204.pdf" />
                             </div>
                         </div>
                     </section>
@@ -619,7 +619,7 @@
                             <div className="grid lg:grid-cols-2 gap-8">
                                 <div className="bg-slate-950/80 p-6 rounded-xl border border-white/5">
                                     <ul className="space-y-3">
-                                        <CourseItem name="Algorithm Design and Analysis" year="2016-2026" />
+                                        <CourseItem name="Algorithm Design and Analysis" year="2016-2026" href="algorithm/algorithm.html" />
                                         <CourseItem name="Ascend C Operator Developmemt" year="2025-2026" />
                                         <CourseItem name="Research Method and Academic Writing (PhD Course)" year="2024-2025" />
                                         <CourseItem name="Data Structures" year="2019-2024" /> 
@@ -885,9 +885,17 @@
             </div>
         );
 
-        const CourseItem = ({ name, year }) => (
+        const CourseItem = ({ name, year, href }) => (
             <li className="flex justify-between items-center border-b border-white/5 pb-2 last:border-0 last:pb-0">
-                <span className="text-slate-300 text-base">{name}</span>
+                <div className="flex items-center gap-2">
+                    <span className="text-slate-300 text-base">{name}</span>
+                    {href && (
+                        <a href={href} className="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-xs font-mono bg-cyan-500/10 text-cyan-400 border-cyan-500/30 hover:bg-cyan-500/20 hover:border-cyan-400 transition-colors no-underline whitespace-nowrap">
+                            <i className="ph-bold ph-arrow-up-right" style={{fontSize: 10}}></i>
+                            课程资料
+                        </a>
+                    )}
+                </div>
                 <span className="font-mono text-slate-500 text-sm">{year}</span>
             </li>
         );

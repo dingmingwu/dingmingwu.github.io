@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Programming - Algorithm Design and Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #020617; color: #cbd5e1; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .glass-panel { background: rgba(20, 25, 35, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(0, 240, 255, 0.1); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5); }
+        .glass-panel:hover { border-color: rgba(0, 240, 255, 0.3); box-shadow: 0 0 20px rgba(0, 240, 255, 0.1); }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(30, 41, 59, 0.5); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(71, 85, 105, 0.8); border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(6, 182, 212, 0.6); }
+        html { scroll-behavior: smooth; overflow-y: scroll; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useCallback } = React;
+
+        const BackgroundCanvas = () => {
+            const canvasRef = useRef(null);
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                let width, height, particles = [], animationFrameId;
+                const resize = () => { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; };
+                class Particle {
+                    constructor() { this.x = Math.random() * width; this.y = Math.random() * height; this.vx = (Math.random() - 0.5) * 0.3; this.vy = (Math.random() - 0.5) * 0.3; this.size = Math.random() * 2 + 1; }
+                    update() { this.x += this.vx; this.y += this.vy; if (this.x < 0 || this.x > width) this.vx *= -1; if (this.y < 0 || this.y > height) this.vy *= -1; }
+                    draw() { ctx.fillStyle = 'rgba(6, 182, 212, 0.5)'; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); }
+                }
+                const init = () => { particles = []; const count = Math.min(window.innerWidth / 15, 80); for (let i = 0; i < count; i++) particles.push(new Particle()); };
+                const animate = () => {
+                    ctx.clearRect(0, 0, width, height);
+                    ctx.lineWidth = 0.5;
+                    for (let i = 0; i < particles.length; i++) {
+                        for (let j = i + 1; j < particles.length; j++) {
+                            const dx = particles[i].x - particles[j].x, dy = particles[i].y - particles[j].y, dist = Math.sqrt(dx*dx + dy*dy);
+                            if (dist < 120) { ctx.strokeStyle = `rgba(6, 182, 212, ${1 - dist/120})`; ctx.beginPath(); ctx.moveTo(particles[i].x, particles[i].y); ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke(); }
+                        }
+                        particles[i].update(); particles[i].draw();
+                    }
+                    animationFrameId = requestAnimationFrame(animate);
+                };
+                window.addEventListener('resize', () => { resize(); init(); });
+                resize(); init(); animate();
+                return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(animationFrameId); };
+            }, []);
+            return <canvas ref={canvasRef} className="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none" />;
+        };
+
+        const SectionHeader = ({ title, subtitle }) => (
+            <div className="mb-8">
+                <span className="text-cyan-500 font-mono text-sm tracking-widest uppercase mb-2 block">// {subtitle}</span>
+                <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight">{title}</h2>
+                <div className="h-1 w-20 bg-gradient-to-r from-cyan-500 to-transparent mt-4"></div>
+            </div>
+        );
+
+        const StepButton = ({ step, setStep, maxStep, label }) => (
+            <div className="flex items-center gap-3 mt-4">
+                <button onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0} className="px-3 py-1.5 bg-slate-800 text-slate-300 rounded text-base font-mono hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">Prev</button>
+                <button onClick={() => setStep(Math.min(maxStep, step + 1))} disabled={step >= maxStep} className="px-3 py-1.5 bg-cyan-600 text-white rounded text-base font-mono hover:bg-cyan-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">Next</button>
+                <span className="text-base text-slate-500 font-mono">{label || `Step ${step} / ${maxStep}`}</span>
+            </div>
+        );
+
+        const KnowledgeCard = ({ title, children, example, onClick, active }) => (
+            <div
+                className={`glass-panel p-6 rounded-xl mb-4 transition-all duration-200${onClick ? ' cursor-pointer' : ''}`}
+                onClick={onClick}
+                style={active ? { borderColor: 'rgba(34,211,238,0.5)', background: 'rgba(6,182,212,0.07)', boxShadow: '0 0 16px rgba(34,211,238,0.1)' } : {}}
+            >
+                <h4 className={`text-lg font-bold mb-2 ${active ? 'text-cyan-300' : 'text-white'}`}>{title}</h4>
+                {children && <div className="text-slate-400 text-base leading-relaxed mb-3">{children}</div>}
+                {example && <div className="text-sm text-cyan-400/80 font-mono bg-slate-900/50 p-3 rounded border border-cyan-500/10">{example}</div>}
+            </div>
+        );
+
+        const Tex = ({ tex, display = false }) => {
+            const html = katex.renderToString(tex, { throwOnError: false, displayMode: display });
+            return <span dangerouslySetInnerHTML={{ __html: html }} />;
+        };
+
+        const sections = [
+            { id: 'complexity', num: '01', title: '算法复杂度分析', titleEn: 'Complexity Analysis' },
+            { id: 'divide', num: '02', title: '分治法', titleEn: 'Divide and Conquer' },
+            { id: 'backtrack', num: '03', title: '回溯法', titleEn: 'Backtracking' },
+            { id: 'dp', num: '04', title: '动态规划', titleEn: 'Dynamic Programming' },
+            { id: 'greedy', num: '05', title: '贪心法', titleEn: 'Greedy Algorithms' },
+            { id: 'maxflow', num: '06', title: '最大流', titleEn: 'Maximum Flow' },
+            { id: 'amortized', num: '07', title: '摊还分析', titleEn: 'Amortized Analysis' },
+            { id: 'np', num: '08', title: 'NP理论', titleEn: 'NP Theory' },
+        ];
+
+        const LCSAnimation = () => {
+            const s1 = 'ABCBDAB';
+            const s2 = 'BDCAB';
+            const m = s1.length, n = s2.length;
+            const [step, setStep] = useState(0);
+
+            const computeDP = () => {
+                const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+                const order = [];
+                for (let i = 1; i <= m; i++) {
+                    for (let j = 1; j <= n; j++) {
+                        if (s1[i-1] === s2[j-1]) {
+                            dp[i][j] = dp[i-1][j-1] + 1;
+                        } else {
+                            dp[i][j] = Math.max(dp[i-1][j], dp[i][j-1]);
+                        }
+                        order.push([i, j, dp[i][j]]);
+                    }
+                }
+                const path = [];
+                let i = m, j = n;
+                while (i > 0 && j > 0) {
+                    if (s1[i-1] === s2[j-1]) { path.push([i, j]); i--; j--; }
+                    else if (dp[i-1][j] >= dp[i][j-1]) i--;
+                    else j--;
+                }
+                return { dp, order, path: path.reverse() };
+            };
+            const { dp, order, path } = computeDP();
+            const totalSteps = order.length;
+            const filledCells = step >= totalSteps ? totalSteps : step;
+            const showPath = step > totalSteps;
+
+            const cellW = 46, cellH = 36;
+            const padL = 54, padT = 44;
+            const svgW = padL + (n + 1) * cellW + 10;
+            const svgH = padT + (m + 1) * cellH + 10;
+
+            const filledSet = new Set();
+            const displayDP = Array.from({ length: m + 1 }, () => Array(n + 1).fill(null));
+            for (let k = 0; k < filledCells; k++) {
+                const [i, j, v] = order[k];
+                displayDP[i][j] = v;
+                filledSet.add(`${i},${j}`);
+            }
+
+            const pathSet = new Set(showPath ? path.map(([i,j]) => `${i},${j}`) : []);
+
+            const getDesc = () => {
+                if (step === 0)
+                    return <span>初始化：边界行与列全部置为 <Tex tex="0" /></span>;
+                if (step > totalSteps)
+                    return <span>回溯路径：从 <Tex tex={`dp[${m}][${n}]`} /> 沿对角线追踪，高亮格子即 LCS 字符位置</span>;
+                const [i, j, val] = order[step - 1];
+                const si = s1[i - 1], sj = s2[j - 1];
+                if (si === sj) {
+                    return <span>
+                        <span className="font-mono text-yellow-400">'{si}'</span>{' = '}<span className="font-mono text-yellow-400">'{sj}'</span>{'，匹配：'}
+                        <Tex tex={`dp[${i}][${j}] = dp[${i-1}][${j-1}] + 1 = ${val}`} />
+                    </span>;
+                } else {
+                    return <span>
+                        <span className="font-mono text-slate-500">'{si}'</span>{' ≠ '}<span className="font-mono text-slate-500">'{sj}'</span>{'，不匹配：'}
+                        <Tex tex={`dp[${i}][${j}] = \\max(dp[${i-1}][${j}],\\,dp[${i}][${j-1}]) = ${val}`} />
+                    </span>;
+                }
+            };
+
+            return (
+                <div className="flex flex-col flex-1">
+                    <div className="text-base font-mono text-slate-400 mb-1">
+                        LCS("{s1}", "{s2}") = "BCAB", length = 4
+                    </div>
+                    <div className="text-base text-slate-400 min-h-[2.5rem] leading-relaxed mb-3">{getDesc()}</div>
+                    <div className="flex gap-4 items-start flex-1 min-h-0">
+                        {/* State transition equation */}
+                        {(() => {
+                            let activeCase = null;
+                            if (step === 0) activeCase = 'boundary';
+                            else if (step <= totalSteps) {
+                                const [i, j] = order[step - 1];
+                                activeCase = s1[i-1] === s2[j-1] ? 'match' : 'mismatch';
+                            }
+                            const row = (key, label, content, cond) => {
+                                const active = activeCase === key;
+                                return (
+                                    <div key={key} className={`px-3 py-2 rounded transition-all ${active ? 'bg-cyan-500/10 border border-cyan-500/30' : 'opacity-35 border border-transparent'}`}>
+                                        <div className="text-sm text-slate-400 mb-1 font-mono">{label}</div>
+                                        <div className={`text-base leading-relaxed ${active ? 'text-cyan-300' : 'text-slate-400'}`}>{content}</div>
+                                        {cond && <div className="text-sm text-slate-500 mt-0.5">{cond}</div>}
+                                    </div>
+                                );
+                            };
+                            return (
+                                <div className="shrink-0 w-[28rem] bg-slate-900/60 border border-slate-700/40 rounded-lg p-2 space-y-1 mt-4">
+                                    <div className="text-base font-mono text-slate-600 px-3 pb-1">// 状态转移方程</div>
+                                    {row('boundary', '边界条件',  <Tex tex="dp[i][j]=0" />, <Tex tex="i=0 \text{ 或 } j=0" />)}
+                                    {row('match',    '字符匹配',  <Tex tex="dp[i][j]=dp[i{-}1][j{-}1]+1" />, <Tex tex="s_1[i]=s_2[j]" />)}
+                                    {row('mismatch', '字符不匹配', <Tex tex="dp[i][j]=\max(dp[i{-}1][j],\,dp[i][j{-}1])" />, <Tex tex="s_1[i]\neq s_2[j]" />)}
+                                </div>
+                            );
+                        })()}
+                        {/* DP table */}
+                        <div className="flex-1 flex justify-center items-start">
+                        <svg viewBox={`0 0 ${svgW} ${svgH}`} style={{ width: svgW, height: svgH, maxHeight: 360 }}>
+                        <text x={padL + cellW/2} y={padT - 8} fill="#64748b" fontSize="16" textAnchor="middle" fontFamily="JetBrains Mono">-</text>
+                        {s2.split('').map((c, j) => (
+                            <text key={j} x={padL + (j+1) * cellW + cellW/2} y={padT - 8} fill="#22d3ee" fontSize="16" textAnchor="middle" fontFamily="JetBrains Mono" fontWeight="bold">{c}</text>
+                        ))}
+                        <text x={padL - 10} y={padT + cellH/2 + 4} fill="#64748b" fontSize="16" textAnchor="middle" fontFamily="JetBrains Mono">-</text>
+                        {s1.split('').map((c, i) => (
+                            <text key={i} x={padL - 10} y={padT + (i+1) * cellH + cellH/2 + 4} fill="#22d3ee" fontSize="16" textAnchor="middle" fontFamily="JetBrains Mono" fontWeight="bold">{c}</text>
+                        ))}
+                        {Array.from({ length: m + 1 }, (_, i) =>
+                            Array.from({ length: n + 1 }, (_, j) => {
+                                const x = padL + j * cellW, y = padT + i * cellH;
+                                const isFilled = (i === 0 || j === 0) || filledSet.has(`${i},${j}`);
+                                const isOnPath = pathSet.has(`${i},${j}`);
+                                const val = (i === 0 || j === 0) ? 0 : displayDP[i][j];
+                                let bg = '#0f172a';
+                                if (isOnPath) bg = 'rgba(6, 182, 212, 0.25)';
+                                else if (filledCells > 0 && filledCells <= totalSteps && order[filledCells-1][0] === i && order[filledCells-1][1] === j) bg = 'rgba(250, 204, 21, 0.2)';
+                                return (
+                                    <g key={`${i}-${j}`}>
+                                        <rect x={x} y={y} width={cellW} height={cellH} fill={bg} stroke="#1e293b" strokeWidth="0.5" />
+                                        {isFilled && val !== null && (
+                                            <text x={x + cellW/2} y={y + cellH/2 + 4} fill={isOnPath ? '#22d3ee' : '#94a3b8'} fontSize="16" textAnchor="middle" fontFamily="JetBrains Mono" fontWeight={isOnPath ? 'bold' : 'normal'}>{val}</text>
+                                        )}
+                                    </g>
+                                );
+                            })
+                        )}
+                        </svg>
+                        </div>
+                    </div>{/* end flex row */}
+                    <div className="mt-auto pt-3">
+                        <StepButton step={step} setStep={setStep} maxStep={totalSteps + 1} label={step === 0 ? '初始化' : step <= totalSteps ? `填格 ${step}/${totalSteps}` : '回溯路径'} />
+                    </div>
+                </div>
+            );
+        };
+
+        const BasicIdeasAnimation = () => {
+            const [step, setStep] = useState(0);
+            const R = 22;
+
+            const nodes = [
+                { id: 0, label: 'F(4)', x: 240, y: 38,  fval: 4 },
+                { id: 1, label: 'F(3)', x: 130, y: 113, fval: 3 },
+                { id: 2, label: 'F(2)', x: 350, y: 113, fval: 2 },
+                { id: 3, label: 'F(2)', x: 65,  y: 188, fval: 2 },
+                { id: 4, label: 'F(1)', x: 195, y: 188, fval: 1 },
+                { id: 5, label: 'F(1)', x: 285, y: 188, fval: 1 },
+                { id: 6, label: 'F(0)', x: 415, y: 188, fval: 0 },
+                { id: 7, label: 'F(1)', x: 30,  y: 258, fval: 1 },
+                { id: 8, label: 'F(0)', x: 100, y: 258, fval: 0 },
+            ];
+            const edges = [
+                { from: 0, to: 1 }, { from: 0, to: 2 },
+                { from: 1, to: 3 }, { from: 1, to: 4 },
+                { from: 2, to: 5 }, { from: 2, to: 6 },
+                { from: 3, to: 7 }, { from: 3, to: 8 },
+            ];
+
+            const visibleByStep = [
+                new Set([0, 1, 2]),
+                new Set([0, 1, 2, 3, 4, 5, 6, 7, 8]),
+                new Set([0, 1, 2, 3, 4, 5, 6, 7, 8]),
+                new Set([0, 1, 2, 3, 4, 5, 6, 7, 8]),
+            ];
+
+            const overlapColor = { 2: '#fb923c', 1: '#a78bfa', 0: '#f472b6' };
+            const cached = new Set([2, 5, 6]);
+
+            const getNodeStyle = (node) => {
+                if (!visibleByStep[step].has(node.id)) return null;
+                if (step === 2) {
+                    const c = overlapColor[node.fval];
+                    if (c) return { fill: c + '22', stroke: c, textFill: c, dashed: false };
+                    return { fill: 'rgba(6,182,212,0.15)', stroke: '#22d3ee', textFill: '#22d3ee', dashed: false };
+                }
+                if (step === 3) {
+                    if (cached.has(node.id)) return { fill: 'rgba(6,182,212,0.08)', stroke: '#22d3ee', textFill: '#22d3ee', dashed: true };
+                    return { fill: '#1e293b', stroke: '#475569', textFill: '#94a3b8', dashed: false };
+                }
+                if (node.id === 0) return { fill: 'rgba(6,182,212,0.15)', stroke: '#22d3ee', textFill: '#22d3ee', dashed: false };
+                return { fill: '#1e293b', stroke: '#475569', textFill: '#94a3b8', dashed: false };
+            };
+
+            const stepInfo = [
+                {
+                    badge: '最优子结构',
+                    eq: <Tex tex="F(n) = F(n-1) + F(n-2)" />,
+                    desc: <span>F(4) 的最优解由子问题 F(3) 和 F(2) 的最优解组成。大问题的最优解包含其子问题的最优解。</span>,
+                },
+                {
+                    badge: '递归展开',
+                    eq: <span>9 次调用 / 5 个不同子问题</span>,
+                    desc: <span>朴素递归自顶向下完整展开，生成 9 个节点，但实际只有 <Tex tex="F(4) \sim F(0)" /> 共 5 个不同的子问题。</span>,
+                },
+                {
+                    badge: '重叠子问题',
+                    eq: null,
+                    desc: <span>同色节点为相同子问题。<Tex tex="F(2)" /> 被计算 2 次，<Tex tex="F(1)" /> 被计算 3 次，<Tex tex="F(0)" /> 被计算 2 次——存在大量重复计算。</span>,
+                },
+                {
+                    badge: '记忆化',
+                    eq: <span><Tex tex="9 \to 6" /> 次</span>,
+                    desc: <span>蓝色虚线节点直接查缓存，<Tex tex="F(2)" /> 右侧子树不再展开。对于 <Tex tex="F(n)" />，复杂度从 <Tex tex="O(2^n)" /> 降至 <Tex tex="O(n)" />。</span>,
+                },
+            ];
+
+            const info = stepInfo[step];
+            const visibleNodes = visibleByStep[step];
+
+            return (
+                <div className="flex flex-col flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                        <span className="text-base font-mono px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">{info.badge}</span>
+                        {info.eq && <span className="text-base font-mono text-slate-500">{info.eq}</span>}
+                    </div>
+                    <div className="text-base text-slate-400 mb-3 leading-relaxed">{info.desc}</div>
+                    <svg viewBox="0 0 460 290" className="w-full mt-4" style={{ maxHeight: 260 }}>
+                        {edges.map((e, idx) => {
+                            if (!visibleNodes.has(e.from) || !visibleNodes.has(e.to)) return null;
+                            const fn = nodes[e.from], tn = nodes[e.to];
+                            const isCachedEdge = step === 3 && cached.has(e.to);
+                            return (
+                                <line key={idx}
+                                    x1={fn.x} y1={fn.y + R} x2={tn.x} y2={tn.y - R}
+                                    stroke={isCachedEdge ? '#22d3ee55' : '#334155'}
+                                    strokeWidth="1.5"
+                                    strokeDasharray={isCachedEdge ? '4,3' : undefined}
+                                />
+                            );
+                        })}
+                        {nodes.map((node) => {
+                            const s = getNodeStyle(node);
+                            if (!s) return null;
+                            return (
+                                <g key={node.id}>
+                                    <circle cx={node.x} cy={node.y} r={R}
+                                        fill={s.fill} stroke={s.stroke} strokeWidth="1.5"
+                                        strokeDasharray={s.dashed ? '4,3' : undefined}
+                                    />
+                                    <text x={node.x} y={node.y + 5} fill={s.textFill}
+                                        fontSize="16" textAnchor="middle" fontFamily="JetBrains Mono">{node.label}</text>
+                                    {step === 3 && cached.has(node.id) && (
+                                        <text x={node.x} y={node.y - R - 5} fill="#22d3ee99" fontSize="14" textAnchor="middle" fontFamily="JetBrains Mono">cache</text>
+                                    )}
+                                </g>
+                            );
+                        })}
+                    </svg>
+                    <div className="mt-auto pt-3">
+                        <StepButton step={step} setStep={setStep} maxStep={3}
+                            label={['最优子结构', '递归展开', '重叠子问题', '记忆化'][step]}
+                        />
+                    </div>
+                </div>
+            );
+        };
+
+        const TopDownBottomUpAnimation = () => {
+            const [mode, setMode] = useState('topdown');
+            const [tdStep, setTdStep] = useState(0);
+            const [buStep, setBuStep] = useState(0);
+            const R = 24;
+
+            // --- Top-down: fib(4) recursion tree ---
+            const tdNodes = [
+                 { id: 0, label: 'F(4)', x: 168, y: 32  }, // midpoint(106,230)                                                      
+                  { id: 1, label: 'F(3)', x: 106, y: 112 }, // midpoint(60,152)                                                       
+                    { id: 2, label: 'F(2)', x: 230, y: 112 }, // cache hit, right edge 254 < memo at 272                                
+                    { id: 3, label: 'F(2)', x: 60,  y: 192 }, // midpoint(30,90)                                                        
+                     { id: 4, label: 'F(1)', x: 152, y: 192 }, // 60+92                                                                  
+                     { id: 5, label: 'F(1)', x: 30,  y: 262 }, // left leaf                                                              
+                   { id: 6, label: 'F(0)', x: 90,  y: 262 }, // 30+60    
+            ];
+            const tdEdges = [
+                { from: 0, to: 1 }, { from: 0, to: 2 },
+                { from: 1, to: 3 }, { from: 1, to: 4 },
+                { from: 3, to: 5 }, { from: 3, to: 6 },
+            ];
+            // DFS call order with memoization: { pending, done, cached, memo }
+            const tdSteps = [
+                { pending: [0],       done: [],            cached: [],  memo: [] },
+                { pending: [0,1],     done: [],            cached: [],  memo: [] },
+                { pending: [0,1,3],   done: [],            cached: [],  memo: [] },
+                { pending: [0,1,3],   done: [5],           cached: [],  memo: [] },
+                { pending: [0,1,3],   done: [5,6],         cached: [],  memo: [] },
+                { pending: [0,1],     done: [3,5,6],       cached: [],  memo: [{n:2,v:1}] },
+                { pending: [0,1],     done: [3,4,5,6],     cached: [],  memo: [{n:2,v:1}] },
+                { pending: [0],       done: [1,3,4,5,6],   cached: [],  memo: [{n:2,v:1},{n:3,v:2}] },
+                { pending: [0],       done: [1,3,4,5,6],   cached: [2], memo: [{n:2,v:1},{n:3,v:2}] },
+                { pending: [],        done: [0,1,2,3,4,5,6], cached: [], memo: [{n:2,v:1},{n:3,v:2},{n:4,v:3}] },
+            ];
+            const tdDescs = [
+                <span>调用 <Tex tex="F(4)"/>，压入调用栈</span>,
+                <span>调用 <Tex tex="F(3)"/>（左子问题，递归展开）</span>,
+                <span>调用 <Tex tex="F(2)"/>（继续向左展开）</span>,
+                <span><Tex tex="F(1) = 1"/>，基础情形，立即返回</span>,
+                <span><Tex tex="F(0) = 0"/>，基础情形，立即返回</span>,
+                <span><Tex tex="F(2) = 1"/> 计算完毕，写入缓存 <Tex tex="\mathrm{memo}[2]=1"/></span>,
+                <span><Tex tex="F(1) = 1"/>，基础情形，立即返回</span>,
+                <span><Tex tex="F(3) = 2"/> 计算完毕，写入缓存 <Tex tex="\mathrm{memo}[3]=2"/></span>,
+                <span>查询 <Tex tex="F(2)"/>：缓存命中 <Tex tex="\mathrm{memo}[2]=1"/>，无需重新计算</span>,
+                <span><Tex tex="F(4) = F(3)+F(2) = 2+1 = 3"/> ✓ 完成</span>,
+            ];
+
+            // --- Bottom-up: fib(4) ---
+            const buVals = [0, 1, 1, 2, 3];
+            const buMaxStep = 5;
+            const buDescs = [
+                <span>初始化 DP 表，所有格子为空</span>,
+                <span><Tex tex="F(0) = 0"/>，基础情形</span>,
+                <span><Tex tex="F(1) = 1"/>，基础情形</span>,
+                <span><Tex tex="F(2) = F(0)+F(1) = 0+1 = 1"/></span>,
+                <span><Tex tex="F(3) = F(1)+F(2) = 1+1 = 2"/></span>,
+                <span><Tex tex="F(4) = F(2)+F(3) = 1+2 = 3"/> ✓ 完成</span>,
+            ];
+            const cellW = 60, cellH = 50, cellGap = 12, tableX = 56, tableY = 34;
+
+            const step   = mode === 'topdown' ? tdStep : buStep;
+            const maxStep = mode === 'topdown' ? tdSteps.length - 1 : buMaxStep;
+            const setStep = mode === 'topdown' ? setTdStep : setBuStep;
+            const desc   = mode === 'topdown' ? tdDescs[tdStep] : buDescs[buStep];
+
+            const td = tdSteps[tdStep];
+            const tdPending = new Set(td.pending);
+            const tdDone    = new Set(td.done);
+            const tdCached  = new Set(td.cached);
+            const tdVisible = new Set([...td.pending, ...td.done, ...td.cached]);
+
+            const getNodeStyle = (node) => {
+                if (!tdVisible.has(node.id)) return null;
+                if (tdPending.has(node.id)) return { fill: 'rgba(250,204,21,0.15)', stroke: '#fbbf24', text: '#fbbf24' };
+                if (tdCached.has(node.id))  return { fill: 'rgba(167,139,250,0.15)', stroke: '#a78bfa', text: '#a78bfa' };
+                return { fill: 'rgba(6,182,212,0.12)', stroke: '#22d3ee', text: '#22d3ee' };
+            };
+
+            return (
+                <div className="flex flex-col flex-1">
+                    {/* Tab switcher */}
+                    <div className="flex gap-2 mb-3">
+                        {[['topdown','自顶向下 · 记忆化'], ['bottomup','自底向上 · 制表']].map(([m, label]) => (
+                            <button key={m} onClick={() => setMode(m)}
+                                className={`px-3 py-1 rounded text-base font-mono transition-colors ${mode === m ? 'bg-cyan-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}>
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+                    {/* Description */}
+                    <div className="text-base text-slate-400 min-h-[2.5rem] leading-relaxed">{desc}</div>
+
+                    {mode === 'topdown' ? (
+                        <svg viewBox="0 0 460 290" className="w-full mt-4" style={{ maxHeight: 255 }}>
+                            {/* Edges */}
+                            {tdEdges.map((e, idx) => {
+                                if (!tdVisible.has(e.from) || !tdVisible.has(e.to)) return null;
+                                const fn = tdNodes.find(n => n.id === e.from);
+                                const tn = tdNodes.find(n => n.id === e.to);
+                                return <line key={idx} x1={fn.x} y1={fn.y+R} x2={tn.x} y2={tn.y-R} stroke="#334155" strokeWidth="1.5" />;
+                            })}
+                            {/* Nodes */}
+                            {tdNodes.map(node => {
+                                const s = getNodeStyle(node);
+                                if (!s) return null;
+                                return (
+                                    <g key={node.id}>
+                                        <circle cx={node.x} cy={node.y} r={R} fill={s.fill} stroke={s.stroke} strokeWidth="1.5" />
+                                        <text x={node.x} y={node.y+5} fill={s.text} fontSize="16" textAnchor="middle" fontFamily="JetBrains Mono">{node.label}</text>
+                                    </g>
+                                );
+                            })}
+                            {/* Memo table */}
+                            <text x={278} y={22} fill="#475569" fontSize="16" fontFamily="JetBrains Mono">memo[ ]</text>
+                            <rect x={272} y={28} width={178} height={Math.max(38, td.memo.length * 30 + 16)} fill="#0c1220" stroke="#1e3a5f" strokeWidth="1" rx="6" />
+                            {td.memo.length === 0
+                                ? <text x={290} y={53} fill="#334155" fontSize="16" fontFamily="JetBrains Mono">（空）</text>
+                                : td.memo.map((m, i) => (
+                                    <text key={m.n} x={290} y={52 + i*30} fill="#22d3ee" fontSize="16" fontFamily="JetBrains Mono">{`[${m.n}] = ${m.v}`}</text>
+                                ))
+                            }
+                            {/* Legend */}
+                            {[
+                                { cy: 175, fill: 'rgba(250,204,21,0.15)', stroke: '#fbbf24', label: '调用中' },
+                                { cy: 201, fill: 'rgba(6,182,212,0.12)',  stroke: '#22d3ee', label: '已返回' },
+                                { cy: 227, fill: 'rgba(167,139,250,0.15)',stroke: '#a78bfa', label: '缓存命中' },
+                            ].map(({ cy, fill, stroke, label }) => (
+                                <g key={label}>
+                                    <circle cx={284} cy={cy} r={7} fill={fill} stroke={stroke} strokeWidth="1.5" />
+                                    <text x={298} y={cy+5} fill="#64748b" fontSize="16" fontFamily="JetBrains Mono">{label}</text>
+                                </g>
+                            ))}
+                        </svg>
+                    ) : (
+                        <svg viewBox="0 0 460 128" className="w-full mt-4" style={{ maxHeight: 118 }}>
+                            {buVals.map((val, i) => {
+                                const cx = tableX + i * (cellW + cellGap);
+                                const isFilled  = i < buStep;
+                                const isCurrent = i === buStep - 1;
+                                const isSource  = buStep >= 3 && (i === buStep-2 || i === buStep-3);
+                                return (
+                                    <g key={i}>
+                                        <text x={cx+cellW/2} y={tableY-10} fill="#22d3ee" fontSize="16" textAnchor="middle" fontFamily="JetBrains Mono">F({i})</text>
+                                        <rect x={cx} y={tableY} width={cellW} height={cellH}
+                                            fill={isCurrent ? 'rgba(6,182,212,0.2)' : isSource ? 'rgba(251,146,60,0.15)' : isFilled ? 'rgba(6,182,212,0.06)' : '#0f172a'}
+                                            stroke={isCurrent ? '#22d3ee' : isSource ? '#fb923c' : isFilled ? '#22d3ee44' : '#1e293b'}
+                                            strokeWidth={isCurrent ? '2' : '1.5'} rx="4" />
+                                        {isFilled && (
+                                            <text x={cx+cellW/2} y={tableY+cellH/2+7} fill={isCurrent ? '#22d3ee' : '#94a3b8'}
+                                                fontSize="20" textAnchor="middle" fontFamily="JetBrains Mono" fontWeight={isCurrent ? 'bold' : 'normal'}>{val}</text>
+                                        )}
+                                    </g>
+                                );
+                            })}
+                            {/* Legend */}
+                            <rect x={tableX} y={102} width={12} height={12} fill="rgba(251,146,60,0.15)" stroke="#fb923c" strokeWidth="1.5" rx="2"/>
+                            <text x={tableX+16} y={113} fill="#64748b" fontSize="16" fontFamily="JetBrains Mono">依赖项</text>
+                            <rect x={tableX+90} y={102} width={12} height={12} fill="rgba(6,182,212,0.2)" stroke="#22d3ee" strokeWidth="2" rx="2"/>
+                            <text x={tableX+106} y={113} fill="#64748b" fontSize="16" fontFamily="JetBrains Mono">当前计算</text>
+                        </svg>
+                    )}
+
+                    <div className="mt-auto pt-3">
+                        <StepButton step={step} setStep={setStep} maxStep={maxStep}
+                            label={`步骤 ${step+1} / ${maxStep+1}`} />
+                    </div>
+                </div>
+            );
+        };
+
+        const KnapsackAnimation = () => {
+            const items = [
+                { weight: 2, value: 3 },
+                { weight: 3, value: 4 },
+                { weight: 4, value: 5 },
+            ];
+            const W = 5, n = items.length;
+            const [step, setStep] = useState(0);
+
+            // Build DP table
+            const dp = Array.from({ length: n + 1 }, () => Array(W + 1).fill(0));
+            const order = [];
+            for (let i = 1; i <= n; i++) {
+                for (let w = 0; w <= W; w++) {
+                    const { weight, value } = items[i - 1];
+                    dp[i][w] = weight <= w
+                        ? Math.max(dp[i-1][w], dp[i-1][w - weight] + value)
+                        : dp[i-1][w];
+                    order.push([i, w]);
+                }
+            }
+            // Traceback
+            const selected = new Set();
+            let tw = W;
+            for (let i = n; i >= 1; i--) {
+                if (dp[i][tw] !== dp[i-1][tw]) { selected.add(i); tw -= items[i-1].weight; }
+            }
+
+            const totalSteps = order.length;
+            const showResult = step > totalSteps;
+            const filledCells = Math.min(step, totalSteps);
+
+            const displayDP = Array.from({ length: n + 1 }, () => Array(W + 1).fill(null));
+            for (let k = 0; k < filledCells; k++) {
+                const [i, w] = order[k];
+                displayDP[i][w] = dp[i][w];
+            }
+
+            const curCell = step > 0 && step <= totalSteps ? order[step - 1] : null;
+
+            let activeCase = null;
+            if (step === 0) activeCase = 'boundary';
+            else if (curCell) {
+                const [i, w] = curCell;
+                activeCase = items[i-1].weight > w ? 'skip' : 'take';
+            }
+
+            const getDesc = () => {
+                if (step === 0) return <span>初始化：<Tex tex="i=0"/> 或 <Tex tex="w=0"/> 时最大价值均为 <Tex tex="0"/></span>;
+                if (showResult) {
+                    const sel = [...selected].sort((a,b)=>a-b);
+                    const tv = sel.reduce((s,i) => s + items[i-1].value, 0);
+                    const tw = sel.reduce((s,i) => s + items[i-1].weight, 0);
+                    return <span>最优解：选取物品 {sel.join('、')}，总重 <Tex tex={`${tw}`}/>，最大价值 <Tex tex={`dp[${n}][${W}]=${tv}`}/></span>;
+                }
+                const [i, w] = curCell;
+                const { weight, value } = items[i-1];
+                if (weight > w) {
+                    return <span>物品 {i}（<Tex tex={`w_${i}=${weight}`}/>）超出容量 <Tex tex={`w=${w}`}/>，跳过：<Tex tex={`dp[${i}][${w}]=dp[${i-1}][${w}]=${dp[i][w]}`}/></span>;
+                }
+                const take = dp[i-1][w - weight] + value, noTake = dp[i-1][w];
+                if (take > noTake)
+                    return <span>取物品 {i} 更优：<Tex tex={`dp[${i}][${w}]=dp[${i-1}][${w-weight}]+${value}=${dp[i][w]}`}/></span>;
+                if (take === noTake)
+                    return <span>两方案等价：<Tex tex={`dp[${i}][${w}]=${dp[i][w]}`}/></span>;
+                return <span>不取物品 {i} 更优：<Tex tex={`dp[${i}][${w}]=dp[${i-1}][${w}]=${dp[i][w]}`}/></span>;
+            };
+
+            const cellW = 52, cellH = 40, padL = 64, padT = 38;
+            const svgW = padL + (W + 1) * cellW + 6;
+            const svgH = padT + (n + 1) * cellH + 6;
+            const rowLabels = ['—', '①', '②', '③'];
+
+            return (
+                <div className="flex flex-col flex-1">
+                    <div className="text-base font-mono text-slate-400 mb-1">
+                        <Tex tex="n=3"/> 件物品，容量 <Tex tex="W=5"/>
+                    </div>
+                    <div className="text-base text-slate-400 min-h-[2.5rem] leading-relaxed mb-3">{getDesc()}</div>
+                    <div className="flex gap-4 items-start flex-1 min-h-0">
+                        {/* Left: items + state transition */}
+                        <div className="shrink-0 w-[28rem] space-y-3 mt-4">
+                            {/* Items table */}
+                            <div className="bg-slate-900/60 border border-slate-700/40 rounded-lg p-3">
+                                <div className="text-base font-mono text-slate-600 mb-2">// 物品列表</div>
+                                <div className="grid grid-cols-3 text-base font-mono text-slate-500 px-1 mb-1">
+                                    <span>#</span><span className="text-center">重量</span><span className="text-center">价值</span>
+                                </div>
+                                {items.map((item, idx) => {
+                                    const isActive = curCell && curCell[0] === idx + 1;
+                                    const isSel = showResult && selected.has(idx + 1);
+                                    return (
+                                        <div key={idx} className={`grid grid-cols-3 text-base font-mono px-1 py-1 rounded transition-colors ${
+                                            isSel    ? 'bg-cyan-500/15 text-cyan-300' :
+                                            isActive ? 'bg-yellow-500/10 text-yellow-300' : 'text-slate-400'}`}>
+                                            <span>{['①','②','③'][idx]}</span>
+                                            <span className="text-center">{item.weight}</span>
+                                            <span className="text-center">{item.value}</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            {/* State transition */}
+                            <div className="bg-slate-900/60 border border-slate-700/40 rounded-lg p-2 space-y-1">
+                                <div className="text-base font-mono text-slate-600 px-3 pb-1">// 状态转移方程</div>
+                                {[
+                                    { key: 'boundary', label: '边界条件', content: <Tex tex="dp[i][w]=0" />,           cond: <Tex tex="i=0 \text{ 或 } w=0" /> },
+                                    { key: 'skip',     label: '物品超重', content: <Tex tex="dp[i][w]=dp[i{-}1][w]" />, cond: <Tex tex="w_i > w" /> },
+                                    { key: 'take',     label: '可装入',   content: <>
+                                        <Tex tex="dp[i][w]=\max(dp[i{-}1][w],\ dp[i{-}1][w{-}w_i]+v_i)" />
+                                    </>, cond: <Tex tex="w_i \leq w" /> },
+                                ].map(({ key, label, content, cond }) => {
+                                    const active = activeCase === key;
+                                    return (
+                                        <div key={key} className={`px-3 py-2 rounded transition-all ${active ? 'bg-cyan-500/10 border border-cyan-500/30' : 'opacity-35 border border-transparent'}`}>
+                                            <div className="text-sm text-slate-400 mb-1 font-mono">{label}</div>
+                                            <div className={`text-base leading-relaxed ${active ? 'text-cyan-300' : 'text-slate-400'}`}>{content}</div>
+                                            {cond && <div className="text-sm text-slate-500 mt-0.5">{cond}</div>}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                        {/* DP table */}
+                        <div className="flex-1 flex justify-center items-start mt-4">
+                        <svg viewBox={`0 0 ${svgW} ${svgH}`} style={{ width: svgW, height: svgH, maxHeight: 290 }}>
+                            {/* Column headers */}
+                            <text x={padL-36} y={padT-10} fill="#475569" fontSize="16" textAnchor="middle" fontFamily="JetBrains Mono">w→</text>
+                            {Array.from({ length: W+1 }, (_,w) => (
+                                <text key={w} x={padL+w*cellW+cellW/2} y={padT-10} fill="#22d3ee" fontSize="16" textAnchor="middle" fontFamily="JetBrains Mono">{w}</text>
+                            ))}
+                            {/* Row headers */}
+                            {rowLabels.map((label, i) => (
+                                <text key={i} x={padL-10} y={padT+i*cellH+cellH/2+5}
+                                    fill={curCell && curCell[0]===i && i>0 ? '#fbbf24' : '#64748b'}
+                                    fontSize="16" textAnchor="end" fontFamily="JetBrains Mono">{label}</text>
+                            ))}
+                            {/* Cells */}
+                            {Array.from({ length: n+1 }, (_,i) =>
+                                Array.from({ length: W+1 }, (_,w) => {
+                                    const x = padL+w*cellW, y = padT+i*cellH;
+                                    const isCurrent = curCell && curCell[0]===i && curCell[1]===w;
+                                    const isFilled  = i===0 || displayDP[i][w] !== null;
+                                    const val = i===0 ? 0 : displayDP[i][w];
+                                    const isResult  = showResult && i===n && w===W;
+                                    let bg = '#0f172a';
+                                    if (isResult)  bg = 'rgba(6,182,212,0.2)';
+                                    else if (isCurrent) bg = 'rgba(250,204,21,0.15)';
+                                    return (
+                                        <g key={`${i}-${w}`}>
+                                            <rect x={x} y={y} width={cellW} height={cellH} fill={bg} stroke="#1e293b" strokeWidth="0.5"/>
+                                            {isFilled && val !== null && (
+                                                <text x={x+cellW/2} y={y+cellH/2+5}
+                                                    fill={isResult ? '#22d3ee' : isCurrent ? '#fbbf24' : '#94a3b8'}
+                                                    fontSize="16" textAnchor="middle" fontFamily="JetBrains Mono"
+                                                    fontWeight={isResult ? 'bold' : 'normal'}>{val}</text>
+                                            )}
+                                        </g>
+                                    );
+                                })
+                            )}
+                        </svg>
+                        </div>
+                    </div>
+                    <div className="mt-auto pt-3">
+                        <StepButton step={step} setStep={setStep} maxStep={totalSteps+1}
+                            label={step===0 ? '初始化' : step<=totalSteps ? `填格 ${step}/${totalSteps}` : '最优解'}/>
+                    </div>
+                </div>
+            );
+        };
+
+        const EditDistAnimation = () => {
+            const s1 = 'horse', s2 = 'ros';
+            const m = s1.length, n = s2.length;
+            // Precompute full DP table
+            const dp = Array.from({ length: m + 1 }, (_, i) =>
+                Array.from({ length: n + 1 }, (_, j) => {
+                    if (i === 0) return j;
+                    if (j === 0) return i;
+                    return 0;
+                })
+            );
+            for (let i = 1; i <= m; i++)
+                for (let j = 1; j <= n; j++)
+                    dp[i][j] = s1[i-1] === s2[j-1]
+                        ? dp[i-1][j-1]
+                        : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+
+            // Build steps: each cell in row-major order
+            const steps = [];
+            for (let i = 0; i <= m; i++)
+                for (let j = 0; j <= n; j++)
+                    steps.push({ i, j });
+
+            const totalSteps = steps.length - 1;
+            const [step, setStep] = React.useState(0);
+
+            const cur = steps[step];
+            const ci = cur.i, cj = cur.j;
+            let activeCase = 'boundary';
+            if (ci > 0 && cj > 0) {
+                activeCase = s1[ci-1] === s2[cj-1] ? 'match' : 'mismatch';
+            }
+
+            const colLabels = ['', ...s2.split('')];
+            const rowLabels = ['', ...s1.split('')];
+
+            // Which cells are "filled" (step >= index)
+            const filledIdx = new Set();
+            for (let k = 0; k <= step; k++) filledIdx.add(k);
+
+            const getCellFill = (i, j) => {
+                const idx = i * (n + 1) + j;
+                if (!filledIdx.has(idx)) return 'none';
+                if (i === ci && j === cj) return 'current';
+                return 'filled';
+            };
+
+            // Traceback path after last step
+            const traceback = [];
+            if (step === totalSteps) {
+                let i = m, j = n;
+                while (i > 0 || j > 0) {
+                    traceback.push([i, j]);
+                    if (i === 0) { j--; }
+                    else if (j === 0) { i--; }
+                    else if (s1[i-1] === s2[j-1]) { i--; j--; }
+                    else {
+                        const del = dp[i-1][j], ins = dp[i][j-1], rep = dp[i-1][j-1];
+                        if (rep <= del && rep <= ins) { i--; j--; }
+                        else if (del <= ins) { i--; }
+                        else { j--; }
+                    }
+                }
+                traceback.push([0, 0]);
+            }
+            const traceSet = new Set(traceback.map(([i,j]) => `${i},${j}`));
+
+            const cellW = 54, cellH = 38;
+            const offX = 180, offY = 46;
+            const svgW = offX + (n + 1) * cellW + 10;
+            const svgH = offY + (m + 1) * cellH + 10;
+
+            const eqRow = (label, children, active) => (
+                <div className={`rounded-lg px-3 py-2 transition-all duration-300 ${active
+                    ? 'bg-cyan-500/10 border border-cyan-500/30 text-cyan-300'
+                    : 'opacity-35 border border-transparent'}`}>
+                    <div className="text-sm text-slate-400 mb-1 font-mono">{label}</div>
+                    <div className="text-base">{children}</div>
+                </div>
+            );
+
+            const getDesc = () => {
+                if (ci === 0 && cj === 0) return <span className="text-slate-400 font-mono text-base">初始化：<Tex tex="dp[0][0]=0" /></span>;
+                if (ci === 0) return <span className="text-slate-400 font-mono text-base">边界：<Tex tex={`dp[0][${cj}]=${cj}`} />{' '}（插入 {cj} 个字符）</span>;
+                if (cj === 0) return <span className="text-slate-400 font-mono text-base">边界：<Tex tex={`dp[${ci}][0]=${ci}`} />{' '}（删除 {ci} 个字符）</span>;
+                if (activeCase === 'match') return <span className="text-slate-400 font-mono text-base">
+                    <Tex tex={`s_1[${ci}]`} /><span className="text-cyan-400 mx-1">='{s1[ci-1]}'</span>=<Tex tex={`s_2[${cj}]`} /><span className="text-cyan-400 mx-1">='{s2[cj-1]}'</span>，匹配，<Tex tex={`dp[${ci}][${cj}]=dp[${ci-1}][${cj-1}]=${dp[ci][cj]}`} />
+                </span>;
+                const del = dp[ci-1][cj], ins = dp[ci][cj-1], rep = dp[ci-1][cj-1];
+                return <span className="text-slate-400 font-mono text-base">
+                    <span className="text-cyan-400">'{s1[ci-1]}'</span> ≠ <span className="text-cyan-400">'{s2[cj-1]}'</span>，<Tex tex={`dp[${ci}][${cj}]=1+\\min(${del},${ins},${rep})=${dp[ci][cj]}`} />
+                </span>;
+            };
+
+            return (
+                <div className="flex flex-col flex-1">
+                    <div className="mb-3 min-h-[2rem]">{getDesc()}</div>
+                    <div className="flex gap-6 items-start flex-1 min-h-0">
+                        {/* Left: equation panel */}
+                        <div className="shrink-0 w-[28rem] space-y-2 mt-6">
+                            {eqRow('边界条件', <Tex tex="dp[i][0]=i,\quad dp[0][j]=j" />, activeCase === 'boundary')}
+                            {eqRow('字符匹配', <Tex tex="dp[i][j]=dp[i-1][j-1]" />, activeCase === 'match')}
+                            {eqRow('字符不匹配', <>
+                                <div><Tex tex="dp[i][j] = 1 + \min" /></div>
+                                <div className="ml-4 mt-1 space-y-0.5 text-sm">
+                                    <div><span className="text-slate-400">删除: </span><Tex tex="dp[i-1][j]" /></div>
+                                    <div><span className="text-slate-400">插入: </span><Tex tex="dp[i][j-1]" /></div>
+                                    <div><span className="text-slate-400">替换: </span><Tex tex="dp[i-1][j-1]" /></div>
+                                </div>
+                            </>, activeCase === 'mismatch')}
+                        </div>
+                        {/* Right: SVG DP table */}
+                        <div className="flex-1 flex flex-col items-center">
+                            <svg width={svgW} height={svgH} className="mt-4">
+                                {/* Column headers */}
+                                {colLabels.map((ch, j) => (
+                                    <text key={j} x={offX + j * cellW + cellW / 2} y={offY - 12}
+                                        textAnchor="middle" fontSize={16} fill={j === cj && ci === 0 ? '#06b6d4' : '#94a3b8'} fontFamily="JetBrains Mono, monospace">
+                                        {ch || '—'}
+                                    </text>
+                                ))}
+                                {/* Row headers */}
+                                {rowLabels.map((ch, i) => (
+                                    <text key={i} x={offX - 12} y={offY + i * cellH + cellH / 2 + 5}
+                                        textAnchor="end" fontSize={16} fill={i === ci && cj === 0 ? '#06b6d4' : '#94a3b8'} fontFamily="JetBrains Mono, monospace">
+                                        {ch || '—'}
+                                    </text>
+                                ))}
+                                {/* Cells */}
+                                {Array.from({ length: m + 1 }, (_, i) =>
+                                    Array.from({ length: n + 1 }, (_, j) => {
+                                        const fill = getCellFill(i, j);
+                                        const isTrace = step === totalSteps && traceSet.has(`${i},${j}`);
+                                        const x = offX + j * cellW, y = offY + i * cellH;
+                                        const bg = fill === 'current' ? '#164e63'
+                                            : isTrace ? '#0e3a4a'
+                                            : fill === 'filled' ? '#0f172a'
+                                            : '#0a0f1e';
+                                        const border = fill === 'current' ? '#06b6d4'
+                                            : isTrace ? '#0891b2'
+                                            : '#334155';
+                                        return (
+                                            <g key={`${i}-${j}`}>
+                                                <rect x={x} y={y} width={cellW} height={cellH}
+                                                    fill={bg} stroke={border} strokeWidth={fill === 'current' ? 1.5 : 1} rx={3} />
+                                                {fill !== 'none' && (
+                                                    <text x={x + cellW / 2} y={y + cellH / 2 + 5}
+                                                        textAnchor="middle" fontSize={16}
+                                                        fill={fill === 'current' ? '#67e8f9' : isTrace ? '#22d3ee' : '#e2e8f0'}
+                                                        fontFamily="JetBrains Mono, monospace" fontWeight={fill === 'current' ? 'bold' : 'normal'}>
+                                                        {dp[i][j]}
+                                                    </text>
+                                                )}
+                                            </g>
+                                        );
+                                    })
+                                )}
+                            </svg>
+                        </div>
+                    </div>
+                    {step === totalSteps && (
+                        <div className="mt-3 text-base font-mono text-cyan-400">
+                            编辑距离 = <Tex tex={`dp[${m}][${n}] = ${dp[m][n]}`} />
+                        </div>
+                    )}
+                    <div className="mt-auto pt-3">
+                        <StepButton step={step} setStep={setStep} maxStep={totalSteps}
+                            label={step === 0 ? '初始化' : `填格 ${step}/${totalSteps}`} />
+                    </div>
+                </div>
+            );
+        };
+
+        const OptimalBSTAnimation = () => {
+            const n = 4;
+            const keys = ['k₁','k₂','k₃','k₄'];
+            const prob = [0.1, 0.2, 0.4, 0.3];
+
+            // Precompute e[i][j] and rt[i][j]
+            const e = Array.from({length: n}, () => Array(n).fill(0));
+            const rt = Array.from({length: n}, () => Array(n).fill(-1));
+            for (let i = 0; i < n; i++) { e[i][i] = prob[i]; rt[i][i] = i; }
+            for (let len = 2; len <= n; len++) {
+                for (let i = 0; i <= n - len; i++) {
+                    const j = i + len - 1;
+                    const w = +prob.slice(i, j+1).reduce((a,b) => a+b, 0).toFixed(2);
+                    e[i][j] = Infinity;
+                    for (let r = i; r <= j; r++) {
+                        const left = r > i ? e[i][r-1] : 0;
+                        const right = r < j ? e[r+1][j] : 0;
+                        const cost = +(left + right + w).toFixed(2);
+                        if (cost < e[i][j]) { e[i][j] = cost; rt[i][j] = r; }
+                    }
+                }
+            }
+
+            // Build step sequence by diagonal
+            const fillSteps = [];
+            for (let len = 1; len <= n; len++)
+                for (let i = 0; i <= n - len; i++)
+                    fillSteps.push({i, j: i + len - 1, len});
+            const totalFillSteps = fillSteps.length; // 10
+            const totalSteps = totalFillSteps + 1;   // +1 for BST display
+
+            const [step, setStep] = React.useState(0);
+            const showBST = step > totalFillSteps;
+            const cur = step >= 1 && step <= totalFillSteps ? fillSteps[step - 1] : null;
+            const filled = new Set(fillSteps.slice(0, step).map(({i,j}) => `${i},${j}`));
+            const activeCase = !cur ? 'none' : cur.len === 1 ? 'base' : 'interval';
+
+            const cellW = 64, cellH = 46;
+            const offX = 60, offY = 50;
+            const svgW = offX + n * cellW + 10;
+            const svgH = offY + n * cellH + 10;
+
+            // BST node layout for the final step
+            const bstNodes = [
+                {id:2, label:'k₃', sub:'0.40', x:163, y:50},
+                {id:1, label:'k₂', sub:'0.20', x:86,  y:130},
+                {id:3, label:'k₄', sub:'0.30', x:240, y:130},
+                {id:0, label:'k₁', sub:'0.10', x:46,  y:205},
+            ];
+            const bstEdges = [[2,1],[2,3],[1,0]];
+
+            const eqRow = (label, children, active) => (
+                <div className={`rounded-lg px-3 py-2 transition-all duration-300 ${active
+                    ? 'bg-cyan-500/10 border border-cyan-500/30 text-cyan-300'
+                    : 'opacity-35 border border-transparent'}`}>
+                    <div className="text-sm text-slate-400 mb-1 font-mono">{label}</div>
+                    <div className="text-base">{children}</div>
+                </div>
+            );
+
+            const getDesc = () => {
+                if (!cur) {
+                    if (showBST) return <span className="text-slate-400 font-mono text-base">最优期望代价 <Tex tex="e[1][4]=1.70" />，根节点 = k₃，展示最优二叉搜索树</span>;
+                    return <span className="text-slate-400 font-mono text-base">按对角线顺序填表，<Tex tex="e[i][j]" /> 表示关键字 <Tex tex="k_i \ldots k_j" /> 构成的最优 BST 的期望代价</span>;
+                }
+                const {i, j, len} = cur;
+                if (len === 1) return <span className="text-slate-400 font-mono text-base">
+                    <Tex tex={`e[${i+1}][${i+1}]=p[k_{${i+1}}]=${prob[i].toFixed(2)}`} />，根节点 = {keys[i]}
+                </span>;
+                const w = +prob.slice(i, j+1).reduce((a,b)=>a+b,0).toFixed(2);
+                return <span className="text-slate-400 font-mono text-base">
+                    <Tex tex={`e[${i+1}][${j+1}]=${w.toFixed(2)}+\\min(\\cdots)=${e[i][j].toFixed(2)}`} />，最优根 = {keys[rt[i][j]]}
+                </span>;
+            };
+
+            const R = 26;
+            return (
+                <div className="flex flex-col flex-1">
+                    <div className="mb-3 min-h-[2rem]">{getDesc()}</div>
+                    <div className="flex gap-6 items-start flex-1 min-h-0">
+                        {/* Left: problem description (step=0) or equations */}
+                        <div className="shrink-0 w-[28rem] space-y-2 mt-4">
+                            {step === 0 ? (
+                                <div className="space-y-3 text-base text-slate-300">
+                                    <p>给定 <Tex tex="n" /> 个有序关键字 <Tex tex="k_1 < k_2 < \cdots < k_n" />，每个关键字有查找概率 <Tex tex="p[k_i]" />。</p>
+                                    <p>构建一棵 BST，使期望查找代价最小：</p>
+                                    <div className="bg-slate-900/60 border border-slate-700/40 rounded-lg px-3 py-2">
+                                        <Tex tex="E = \sum_{i=1}^{n}(\text{depth}(k_i)+1)\cdot p[k_i]" />
+                                    </div>
+                                    <p className="text-base text-slate-400">本例：4 个关键字，概率如下</p>
+                                    <table className="w-full text-base font-mono border-collapse">
+                                        <thead>
+                                            <tr>{['关键字',...keys].map(h => <th key={h} className="text-slate-400 font-normal text-left pb-1 pr-3">{h}</th>)}</tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>{['概率',...prob.map(p=>p.toFixed(2))].map((v,i) => <td key={i} className="text-cyan-300 pr-3">{v}</td>)}</tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <>
+                                    {eqRow('边界条件', <Tex tex="e[i][i] = p[k_i]" />, activeCase === 'base')}
+                                    {eqRow('区间 [i, j]', <>
+                                        <div><Tex tex="e[i][j]=w(i,j)+\min_{r=i}^{j}(e[i][r{-}1]+e[r{+}1][j])" /></div>
+                                        <div className="text-slate-400 mt-1">其中 <Tex tex="w(i,j)=\sum_{k=i}^{j}p[k]" /></div>
+                                    </>, activeCase === 'interval')}
+                                </>
+                            )}
+                        </div>
+                        {/* Right: DP table or BST */}
+                        <div className="flex-1 flex flex-col items-center">
+                            {!showBST ? (
+                                <svg width={svgW} height={svgH} className="mt-4">
+                                    {/* Column headers */}
+                                    {keys.map((k, j) => (
+                                        <text key={j} x={offX + j*cellW + cellW/2} y={offY - 12}
+                                            textAnchor="middle" fontSize={16}
+                                            fill={cur && cur.j === j ? '#06b6d4' : '#94a3b8'}
+                                            fontFamily="JetBrains Mono, monospace">{k}</text>
+                                    ))}
+                                    {/* Row headers */}
+                                    {keys.map((k, i) => (
+                                        <text key={i} x={offX - 12} y={offY + i*cellH + cellH/2 + 5}
+                                            textAnchor="end" fontSize={16}
+                                            fill={cur && cur.i === i ? '#06b6d4' : '#94a3b8'}
+                                            fontFamily="JetBrains Mono, monospace">{k}</text>
+                                    ))}
+                                    {/* Upper-triangular cells */}
+                                    {Array.from({length: n}, (_, i) =>
+                                        Array.from({length: n}, (_, j) => {
+                                            if (j < i) return null;
+                                            const key = `${i},${j}`;
+                                            const isFilled = filled.has(key);
+                                            const isCur = cur && cur.i === i && cur.j === j;
+                                            const x = offX + j*cellW, y = offY + i*cellH;
+                                            const bg = isCur ? '#164e63' : isFilled ? '#0f172a' : '#0a0f1e';
+                                            const stroke = isCur ? '#06b6d4' : isFilled ? '#1e3a5f' : '#1e293b';
+                                            return (
+                                                <g key={key}>
+                                                    <rect x={x} y={y} width={cellW} height={cellH}
+                                                        fill={bg} stroke={stroke} strokeWidth={isCur?1.5:1} rx={3}/>
+                                                    {isFilled && <>
+                                                        <text x={x+cellW/2} y={y+cellH/2+2}
+                                                            textAnchor="middle" fontSize={16}
+                                                            fill={isCur ? '#67e8f9' : '#e2e8f0'}
+                                                            fontFamily="JetBrains Mono, monospace"
+                                                            fontWeight={isCur ? 'bold' : 'normal'}>
+                                                            {e[i][j].toFixed(2)}
+                                                        </text>
+                                                        <text x={x+cellW-5} y={y+cellH-5}
+                                                            textAnchor="end" fontSize={14}
+                                                            fill={isCur ? '#22d3ee' : '#475569'}
+                                                            fontFamily="JetBrains Mono, monospace">
+                                                            r={rt[i][j]+1}
+                                                        </text>
+                                                    </>}
+                                                </g>
+                                            );
+                                        })
+                                    )}
+                                </svg>
+                            ) : (
+                                <svg width={svgW} height={svgH} className="mt-4">
+                                    {bstEdges.map(([pid,cid]) => {
+                                        const par = bstNodes.find(nd => nd.id === pid);
+                                        const ch  = bstNodes.find(nd => nd.id === cid);
+                                        return <line key={`${pid}-${cid}`}
+                                            x1={par.x} y1={par.y} x2={ch.x} y2={ch.y}
+                                            stroke="#334155" strokeWidth={2}/>;
+                                    })}
+                                    {bstNodes.map(nd => (
+                                        <g key={nd.id}>
+                                            <circle cx={nd.x} cy={nd.y} r={R}
+                                                fill="#0f172a" stroke="#06b6d4" strokeWidth={1.5}/>
+                                            <text x={nd.x} y={nd.y - 4}
+                                                textAnchor="middle" fontSize={16}
+                                                fill="#e2e8f0" fontFamily="JetBrains Mono, monospace"
+                                                fontWeight="bold">{nd.label}</text>
+                                            <text x={nd.x} y={nd.y + 12}
+                                                textAnchor="middle" fontSize={16}
+                                                fill="#64748b" fontFamily="JetBrains Mono, monospace">
+                                                {nd.sub}
+                                            </text>
+                                        </g>
+                                    ))}
+                                    <text x={svgW/2} y={svgH - 8}
+                                        textAnchor="middle" fontSize={16}
+                                        fill="#06b6d4" fontFamily="JetBrains Mono, monospace">
+                                        最小期望代价 = 1.70
+                                    </text>
+                                </svg>
+                            )}
+                        </div>
+                    </div>
+                    <div className="mt-auto pt-3">
+                        <StepButton step={step} setStep={setStep} maxStep={totalSteps}
+                            label={step === 0 ? '初始化' : step <= totalFillSteps ? `填格 ${step}/${totalFillSteps}` : '最优二叉搜索树'} />
+                    </div>
+                </div>
+            );
+        };
+
+        const DPSection = () => {
+            const [selected, setSelected] = useState('basics');
+            const rightContent = {
+                basics:   { title: '动态规划：基本思想',      component: <BasicIdeasAnimation /> },
+                topdown:  { title: '自顶向下 vs 自底向上',    component: <TopDownBottomUpAnimation /> },
+                lcs:      { title: 'LCS DP Table Animation', component: <LCSAnimation /> },
+                knapsack: { title: '0/1 背包问题',            component: <KnapsackAnimation /> },
+                editdist: { title: '编辑距离',                component: <EditDistAnimation /> },
+                optbst:   { title: '最优二叉搜索树',          component: <OptimalBSTAnimation /> },
+            };
+            const current = rightContent[selected];
+            return (
+                <section id="dp" className="py-20">
+                    <div className="container mx-auto px-6">
+                        <SectionHeader title="动态规划" subtitle="DYNAMIC PROGRAMMING" />
+                        <div className="grid lg:grid-cols-[3fr_7fr] gap-8">
+                            <div className="space-y-4">
+                                <KnowledgeCard title="基本思想" onClick={() => setSelected('basics')} active={selected === 'basics'}>
+                                </KnowledgeCard>
+                                <KnowledgeCard title="自顶向下 vs 自底向上" onClick={() => setSelected('topdown')} active={selected === 'topdown'}>
+                                </KnowledgeCard>
+                                <KnowledgeCard title="最长公共子序列" onClick={() => setSelected('lcs')} active={selected === 'lcs'}>
+                                </KnowledgeCard>
+                                <KnowledgeCard title="背包问题" onClick={() => setSelected('knapsack')} active={selected === 'knapsack'}>
+                                </KnowledgeCard>
+                                <KnowledgeCard title="编辑距离" onClick={() => setSelected('editdist')} active={selected === 'editdist'} />
+                                <KnowledgeCard title="最优二叉搜索树" onClick={() => setSelected('optbst')} active={selected === 'optbst'} />
+                            </div>
+                            <div className="glass-panel p-6 rounded-xl flex flex-col">
+                                {current ? (
+                                    <>
+                                        <h4 className="text-white font-bold mb-4">{current.title}</h4>
+                                        {current.component}
+                                    </>
+                                ) : (
+                                    <div className="text-slate-500 text-center py-20 font-mono text-sm">Select a topic to view its visualization.</div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        const App = () => {
+            const [scrolled, setScrolled] = useState(false);
+            const [mobileNav, setMobileNav] = useState(false);
+            const currentId = 'dp';
+
+            useEffect(() => {
+                const handleScroll = () => setScrolled(window.scrollY > 50);
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            return (
+                <div className="min-h-screen font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
+                    <BackgroundCanvas />
+                    <nav className={`fixed top-0 w-full z-50 transition-all duration-300 border-b border-white/5 backdrop-blur-md ${scrolled ? 'bg-slate-950/80 py-3' : 'bg-transparent py-5'}`}>
+                        <div className="container mx-auto px-6 flex justify-between items-center">
+                            <a href="algorithm.html" className="flex items-center gap-2 text-slate-400 hover:text-cyan-400 transition-colors no-underline group">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                <span className="font-mono text-sm">Back to Course</span>
+                            </a>
+                            <div className="hidden lg:flex gap-4">
+                                {sections.map((s) => (
+                                    <a key={s.id} href={`${s.id}.html`} className={`text-xs font-mono transition-colors no-underline ${s.id === currentId ? 'text-cyan-400' : 'text-slate-500 hover:text-cyan-400'}`}>
+                                        <span className="text-cyan-600">{s.num}</span> {s.titleEn}
+                                    </a>
+                                ))}
+                            </div>
+                            <button className="lg:hidden text-slate-400 hover:text-white" onClick={() => setMobileNav(!mobileNav)}>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                            </button>
+                        </div>
+                        {mobileNav && (
+                            <div className="lg:hidden bg-slate-950/95 border-t border-white/5 px-6 py-4 space-y-2">
+                                {sections.map((s) => (
+                                    <a key={s.id} href={`${s.id}.html`} className={`block text-sm font-mono transition-colors no-underline py-1 ${s.id === currentId ? 'text-cyan-400' : 'text-slate-400 hover:text-cyan-400'}`} onClick={() => setMobileNav(false)}>
+                                        <span className="text-cyan-600">{s.num}</span> {s.title}
+                                    </a>
+                                ))}
+                            </div>
+                        )}
+                    </nav>
+                    <DPSection />
+                    <footer className="py-12 border-t border-white/5 bg-black/40 backdrop-blur-md">
+                        <div className="container mx-auto px-6 text-center">
+                            <p className="text-sm text-gray-600 font-mono">
+                                © {new Date().getFullYear()} Dingming Wu. Algorithm Design and Analysis Course Material.
+                            </p>
+                        </div>
+                    </footer>
+                </div>
+            );
+        };
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
