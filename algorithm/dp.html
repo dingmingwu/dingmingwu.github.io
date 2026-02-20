@@ -972,15 +972,6 @@
                                     <div className="bg-slate-900/60 border border-slate-700/40 rounded-lg px-3 py-2">
                                         <Tex tex="E = \sum_{i=1}^{n}(\text{depth}(k_i)+1)\cdot p[k_i]" />
                                     </div>
-                                    <p className="text-base text-slate-400">本例：4 个关键字，概率如下</p>
-                                    <table className="w-full text-base font-mono border-collapse">
-                                        <thead>
-                                            <tr>{['关键字',...keys].map(h => <th key={h} className="text-slate-400 font-normal text-left pb-1 pr-3">{h}</th>)}</tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>{['概率',...prob.map(p=>p.toFixed(2))].map((v,i) => <td key={i} className="text-cyan-300 pr-3">{v}</td>)}</tr>
-                                        </tbody>
-                                    </table>
                                 </div>
                             ) : (
                                 <>
@@ -991,6 +982,17 @@
                                     </>, activeCase === 'interval')}
                                 </>
                             )}
+                            <div className="mt-2">
+                                <p className="text-base text-slate-400">本例：4 个关键字，概率如下</p>
+                                <table className="w-full text-base font-mono border-collapse mt-1">
+                                    <thead>
+                                        <tr>{['关键字',...keys].map(h => <th key={h} className="text-slate-400 font-normal text-left pb-1 pr-3">{h}</th>)}</tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>{['概率',...prob.map(p=>p.toFixed(2))].map((v,i) => <td key={i} className="text-cyan-300 pr-3">{v}</td>)}</tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                         {/* Right: DP table or BST */}
                         <div className="flex-1 flex flex-col items-center">
