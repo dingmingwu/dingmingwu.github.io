@@ -4,6 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dingming Wu - Academic Portfolio</title>
+
+    <!-- Mobile redirect: phones go to mobile.html unless ?desktop=1 is set -->
+    <script>
+    (function() {
+        try {
+            var override = window.location.search.indexOf('desktop=1') !== -1;
+            var isPhone = window.innerWidth < 768 || /Mobi|Android|iPhone|iPod/i.test(navigator.userAgent);
+            if (isPhone && !override) {
+                window.location.replace('mobile.html' + window.location.hash);
+            }
+        } catch (e) {}
+    })();
+    </script>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>

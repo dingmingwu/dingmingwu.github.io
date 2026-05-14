@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="theme-color" content="#020617">
+    <title>Dingming Wu - Mobile</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+        html, body {
+            overflow-x: hidden;
+            max-width: 100vw;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #020617;
+            color: #cbd5e1;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        .glass-panel {
+            background: rgba(20, 25, 35, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 240, 255, 0.1);
+        }
+
+        /* Soft radial accent background (cheaper than canvas particles on phones) */
+        .mobile-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -10;
+            pointer-events: none;
+            background:
+                radial-gradient(circle at 15% 10%, rgba(6, 182, 212, 0.18), transparent 45%),
+                radial-gradient(circle at 85% 90%, rgba(59, 130, 246, 0.14), transparent 45%),
+                #020617;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .menu-anim { animation: slideDown 0.18s ease-out; }
+
+        /* Better long-word breaking for narrow screens */
+        .break-anywhere {
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-bg"></div>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- Data (kept in sync with index.html) ---
+        const personalInfo = {
+            email: "dingming@szu.edu.cn",
+            email2: "dingming.wu@gmail.com",
+            address: "Room 618, Zhi Teng Building, College of CS & SE, Shenzhen University"
+        };
+
+        const researchInterestsData = [
+            { id: 1, title: "Large Graph Analytics", icon: "graph", desc: [
+                "How to apply approximation techniques to classical graph algorithms for large, dynamic datasets.",
+                "How to learn scalable embeddings for large graphs that preserve semantic relationships and topological properties.",
+                "How to optimize mining and querying in knowledge graphs."
+            ] },
+            { id: 2, title: "Spatio-Temporal & Geo-Social Intelligence", icon: "globe", desc: [
+                "How to mine dense blocks in spatiotemporal tensors for large-scale data analysis and pattern extraction.",
+                "How to integrate spatio-temporal data with geo-social interactions to generate real-time, context-aware recommendations.",
+                "How to efficiently query large spatio-temporal datasets."
+            ] },
+            { id: 3, title: "Machine Learning in Business and Manufacturing", icon: "factory", desc: [
+                "Develop foundation models for market analysis, client prediction, and strategic planning.",
+                "Develop foundation models for smart manufacturing."
+            ] },
+            { id: 4, title: "Medical Image Analysis", icon: "brain", desc: [
+                "Develop foundation models for 3D MRI image segmentation.",
+                "Develop foundation models for 3D MRI image in-painting."
+            ] }
+        ];
+
+        const publicationsData = {
+            journals: [
+                { id: "J20", title: "GREAT: Generalized Reservoir Sampling based Triangle Counting Estimation over Streaming Graphs", venue: "Proc. VLDB Endow. 18(7)", year: "2025", authors: "Siyue Wu, Dingming Wu, Sinhong Cheuk, Tsz Nam Chan, Kezhong Lu", pdf: "pdf/p2031-wu.pdf" },
+                { id: "J19", title: "Efficient and Accurate PageRank Approximation on Large Graphs", venue: "Proc. ACM Manag. Data 2(4)", year: "2024", authors: "Siyue Wu, Dingming Wu, Junyi Quan, Tsz Nam Chan, Kezhong Lu", pdf: "pdf/3677132.pdf" },
+                { id: "J18", title: "LION: Fast and High-Resolution Network Kernel Density Visualization", venue: "Proc. VLDB Endow. 17(6)", year: "2024", authors: "Tsz Nam Chan, Rui Zang, Bojian Zhu, Leong Hou U, Dingming Wu, Jianliang Xu", pdf: "pdf/3648160.3648168.pdf" },
+                { id: "J17", title: "LARGE: A Length-Aggregation-based Grid Structure for Line Density Visualization", venue: "Proc. VLDB Endow. 17(13)", year: "2024", authors: "Tsz Nam Chan, Bojian Zhu, Dingming Wu, Yun Peng, Leong Hou U", pdf: "pdf/p4585-chan.pdf" },
+                { id: "J16", title: "Efficient Skyline Keyword-Based Tree Retrieval on Attributed Graphs", venue: "IEEE Trans. Knowl. Data Eng. 36(11)", year: "2024", authors: "Dingming Wu, Zhaofen Zhang, Christian S. Jensen, Kezhong Lu", pdf: "pdf/Efficient_Skyline_Keyword-Based_Tree_Retrieval_on_Attributed_Graphs.pdf" },
+                { id: "J15", title: "Efficient Retrieval of the Top-k Most Relevant Event-Partner Pairs", venue: "IEEE Trans. Knowl. Data Eng. 35(3)", year: "2023", authors: "Dingming Wu, Erjia Xiao, Yi Zhu, Christian S. Jensen, Kezhong Lu", pdf: "pdf/Efficient_Retrieval_of_the_Top-k_Most_Relevant_Event-Partner_Pairs.pdf" },
+                { id: "J14", title: "Density-Based Top-K Spatial Textual Clusters Retrieval", venue: "IEEE Trans. Knowl. Data Eng. 34(11)", year: "2022", authors: "Dingming Wu, Ilkcan Keles, Song Wu, Hao Zhou, Simonas Saltenis, Christian S. Jensen, Kezhong Lu", pdf: "pdf/Density-Based_Top-K_Spatial_Textual_Clusters_Retrieval.pdf" },
+                { id: "J13", title: "Top-k relevant semantic place retrieval on spatiotemporal RDF data", venue: "VLDB J. 29(4)", year: "2020", authors: "Dingming Wu, Hao Zhou, Jieming Shi, Nikos Mamoulis", pdf: "pdf/s00778-019-00591-8.pdf" },
+                { id: "J12", title: "Density-Based Place Clustering Using Geo-Social Network Data", venue: "IEEE Trans. Knowl. Data Eng. 30(5)", year: "2018", authors: "Dingming Wu, Jieming Shi, Nikos Mamoulis", pdf: "pdf/Density-Based_Place_Clustering_Using_Geo-Social_Network_Data.pdf" },
+                { id: "J11", title: "Location Aware Keyword Query Suggestion Based on Document Proximity", venue: "IEEE Trans. Knowl. Data Eng. 28(1)", year: "2016", authors: "Shuyao Qi, Dingming Wu, Nikos Mamoulis", pdf: "pdf/Location_Aware_Keyword_Query_Suggestion_Based_on_Document_Proximity.pdf" },
+                { id: "J10", title: "Textually Relevant Spatial Skylines", venue: "IEEE Trans. Knowl. Data Eng. (TKDE) 28(1)", year: "2016", authors: "Jieming Shi, Dingming Wu, Nikos Mamoulis", pdf: "pdf/Textually_Relevant_Spatial_Skylines.pdf" },
+                { id: "J9", title: "Clustering in Geo-Social Networks", venue: "IEEE Data Eng. Bull. 38(2)", year: "2015", authors: "Dingming Wu, Nikos Mamoulis, Jieming Shi", pdf: "pdf/p47.pdf" },
+                { id: "J8", title: "Authentication of Moving Top-k Spatial Keyword Queries", venue: "IEEE Trans. Knowl. Data Eng. 27(4)", year: "2015", authors: "Dingming Wu, Byron Choi, Jianliang Xu, Christian S. Jensen", pdf: "pdf/Authentication_of_Moving_Top-k_Spatial_Keyword_Queries.pdf" },
+                { id: "J7", title: "Spatial-aware interest group queries in location-based social networks", venue: "Data Knowl. Eng. 92", year: "2014", authors: "Yafei Li, Dingming Wu, Jianliang Xu, Byron Choi, Weifeng Su", pdf: "pdf/1-s2.0-S0169023X14000585-main.pdf" },
+                { id: "J6", title: "Spatial Keyword Query Processing: An Experimental Evaluation", venue: "Proc. VLDB Endow. 6(3)", year: "2013", authors: "Lisi Chen, Gao Cong, Christian S. Jensen, Dingming Wu", pdf: "pdf/2535569.2448955.pdf" },
+                { id: "J5", title: "Moving spatial keyword queries: Formulation, methods, and analysis", venue: "ACM Trans. Database Syst. 38(1)", year: "2013", authors: "Dingming Wu, Man Lung Yiu, Christian S. Jensen", pdf: "pdf/2445583.2445590.pdf" },
+                { id: "J4", title: "SWORS: A System for the Efficient Retrieval of Relevant Spatial Web Objects", venue: "Proc. VLDB Endow. 5(12)", year: "2012", authors: "Xin Cao, Gao Cong, Christian S. Jensen, Jun Jie Ng, Beng Chin Ooi, Nhan-Tue Phan, Dingming Wu", pdf: "pdf/vldb12swors.pdf" },
+                { id: "J3", title: "Joint Top-K Spatial Keyword Query Processing", venue: "IEEE Trans. Knowl. Data Eng. 24(10)", year: "2012", authors: "Dingming Wu, Man Lung Yiu, Gao Cong, Christian S. Jensen", pdf: "pdf/Joint_Top-K_Spatial_Keyword_Query_Processing.pdf" },
+                { id: "J2", title: "A framework for efficient spatial web object retrieval", venue: "VLDB J. 21(6)", year: "2012", authors: "Dingming Wu, Gao Cong, Christian S. Jensen", pdf: "pdf/s00778-012-0271-0.pdf" },
+                { id: "J1", title: "Efficient Retrieval of the Top-k Most Relevant Spatial Web Objects", venue: "Proc. VLDB Endow. 2(1)", year: "2009", authors: "Gao Cong, Christian S. Jensen, Dingming Wu", pdf: "pdf/1687627.1687666.pdf" }
+            ],
+            conferences: [
+                { id: "C16", title: "Large-Scale Spatiotemporal Kernel Density Visualization", venue: "ICDE", year: "2025", authors: "Tsz Nam Chan, Pak Lon Ip, Bojian Zhu, Leong Hou U, Dingming Wu, Jianliang Xu, Christian S. Jensen", pdf: "pdf/Large-Scale_Spatiotemporal_Kernel_Density_Visualization.pdf" },
+                { id: "C15", title: "Spatially Compact Dense Block Mining in Spatial Tensors", venue: "KDD", year: "2025", authors: "Weike Tang, Dingming Wu, Tsz Nam Chan, Kezhong Lu", pdf: "pdf/3690624.3709221.pdf" },
+                { id: "C14", title: "A Fast Line Density Visualization Plugin for Geographic Information Systems", venue: "SIGMOD (Companion)", year: "2025", authors: "Tsz Nam Chan, Bojian Zhu, Dingming Wu, Yun Peng, Leong Hou U, Wei Tu, Ruisheng Wang", pdf: "pdf/3722212.3725075.pdf" },
+                { id: "C13", title: "A Re-evaluation of Deep Learning Methods for Attributed Graph Clustering", venue: "CIKM", year: "2023", authors: "Xinying Lai, Dingming Wu, Christian S. Jensen, Kezhong Lu", pdf: "pdf/3583780.3614768.pdf" },
+                { id: "C12", title: "Semantic Region Retrieval from Spatial RDF Data", venue: "DASFAA", year: "2020", authors: "Dingming Wu, Can Hou, Erjia Xiao, Christian S. Jensen", pdf: "pdf/978-3-030-59416-9_25.pdf" },
+                { id: "C11", title: "Efficiently Mining Maximal Diverse Frequent Itemsets", venue: "DASFAA", year: "2019", authors: "Dingming Wu, Dexin Luo, Christian S. Jensen, Joshua Zhexue Huang", pdf: "pdf/978-3-030-18579-4_12.pdf" },
+                { id: "C10", title: "In Good Company: Efficient Retrieval of the Top-k Most Relevant Event-Partner Pairs", venue: "DASFAA", year: "2019", authors: "Dingming Wu, Yi Zhu, Christian S. Jensen", pdf: "pdf/978-3-030-18579-4_31.pdf" },
+                { id: "C9", title: "A Density-Based Approach to the Retrieval of Top-K Spatial Textual Clusters", venue: "CIKM", year: "2016", authors: "Dingming Wu, Christian S. Jensen", pdf: "pdf/2983323.2983648.pdf" },
+                { id: "C8", title: "Top-k Relevant Semantic Place Retrieval on Spatial RDF Data", venue: "SIGMOD", year: "2016", authors: "Jieming Shi, Dingming Wu, Nikos Mamoulis", pdf: "pdf/2882903.2882941.pdf" },
+                { id: "C7", title: "Overlapping Community Regularization for Rating Prediction in Social Recommender Systems", venue: "RecSys", year: "2015", authors: "Hui Li, Dingming Wu, Wenbin Tang, Nikos Mamoulis", pdf: "pdf/2792838.2800171.pdf" },
+                { id: "C6", title: "Efficient Top-k Subscription Matching for Location-Aware Publish/Subscribe", venue: "SSTD", year: "2015", authors: "Jiafeng Hu, Reynold Cheng, Dingming Wu, Beihong Jin", pdf: "pdf/p978-3-319-22363-6_18.pdf" },
+                { id: "C5", title: "Social-Aware Top-k Spatial Keyword Search", venue: "MDM", year: "2014", authors: "Dingming Wu, Yafei Li, Byron Choi, Jianliang Xu", pdf: "pdf/Social-Aware_Top-k_Spatial_Keyword_Search.pdf" },
+                { id: "C4", title: "A revisit to social network-based recommender systems", venue: "SIGIR", year: "2014", authors: "Hui Li, Dingming Wu, Nikos Mamoulis", pdf: "pdf/2600428.2609554.pdf" },
+                { id: "C3", title: "Density-based place clustering in geo-social networks", venue: "SIGMOD", year: "2014", authors: "Jieming Shi, Nikos Mamoulis, Dingming Wu, David W. Cheung", pdf: "pdf/2588555.2610497.pdf" },
+                { id: "C2", title: "Spatial-aware interest group queries in location-based social networks", venue: "CIKM", year: "2012", authors: "Yafei Li, Dingming Wu, Jianliang Xu, Byron Choi, Weifeng Su", pdf: "pdf/2396761.2398713.pdf" },
+                { id: "C1", title: "Efficient continuously moving top-k spatial keyword query processing", venue: "ICDE", year: "2011", authors: "Dingming Wu, Man Lung Yiu, Christian S. Jensen, Gao Cong", pdf: "pdf/Efficient_continuously_moving_top-k_spatial_keyword_query_processing.pdf" }
+            ]
+        };
+
+        const booksData = [
+            { title: "Mastering the Academic Writing Mindset: A Guide to Crafting Computer Science Papers", publisher: "Springer Nature", year: "2026", authors: "Tsz Nam Chan, Dingming Wu", url: "https://link.springer.com/book/10.1007/978-981-95-4850-7", cover: "61DwcseR9sL._SY522_.jpg" },
+            { title: "Algorithm Design and Analysis: Practical Case Studies", publisher: "Tsinghua University Press", year: "2025", authors: "Xuan Yang, Yanran Li, Dingming Wu", url: "https://www.tup.com.cn/booksCenter/book_10553101.html", cover: "105531-01.jpg" },
+            { title: "Algorithm Design and Analysis", publisher: "Tsinghua University Press", year: "2025", authors: "Wenfeng Du, Xuan Yang, Gang Liu, Dingming Wu", url: "https://www.changxianggu.com/teacher/activityschool/bookdetail.html?isbn=9787895114777", cover: "11_9787895114777.jpg" }
+        ];
+
+        const projectsData = [
+            { title: "Multi-Sample Distributed Computing for Large-Scale Graph Data Analysis", agency: "NSFC General Program", code: "62372308", amount: "RMB 500,000", period: "2024-2027", role: "Principal Investigator" },
+            { title: "Key Technologies for Graph Embedding Representation Learning", agency: "Guangdong Basic & Applied Basic Research", code: "2023A1515011619", amount: "RMB 100,000", period: "2023-2025", role: "Principal Investigator" },
+            { title: "Key Technologies for Customs Officers' Enforcement Profiling", agency: "General Administration of Customs", code: "", amount: "RMB 300,000", period: "2022-2023", role: "Principal Investigator" },
+            { title: "Event-Based 'Activity-Partner' Retrieval on Social Networks", agency: "Shenzhen Stable Support Program", code: "20200806102941001", amount: "RMB 300,000", period: "2021-2022", role: "Principal Investigator" },
+            { title: "Development Trends of Computing Industry Innovation Ecosystem", agency: "Chinese Academy of Sciences", code: "2020-ZW04-A-014", amount: "RMB 600,000", period: "2020-2021", role: "Principal Investigator" },
+            { title: "Semantic Location Retrieval Techniques over Spatio-Temporal RDF Data", agency: "Guangdong Basic Research", code: "2019A1515011721", amount: "RMB 100,000", period: "2019-2022", role: "Principal Investigator" },
+            { title: "Location-Aware Network Information Retrieval and Recommendation", agency: "NSFC Young Scientists Fund", code: "61502310", amount: "RMB 240,000", period: "2016-2018", role: "Principal Investigator" },
+            { title: "SZU - Tefa Information Industrial IoT Big Data AI Joint Research", agency: "Shenzhen Tefa Information", code: "JCYJ20220818100205012", amount: "RMB 3M", period: "2024-2027", role: "Co-Investigator" },
+            { title: "Supervision and Inspection Management Subsystem (Phase III)", agency: "Shenzhen Customs", code: "", amount: "RMB 1.78M", period: "2023-2025", role: "Co-Investigator" },
+            { title: "Supervision and Inspection Management Subsystem (Phase II)", agency: "Shenzhen Customs", code: "", amount: "RMB 1.21M", period: "2022-2023", role: "Co-Investigator" },
+            { title: "Cross-Domain Big Data Complexity Theory and Distributed Algorithms", agency: "Shenzhen Sci-Tech Innovation", code: "JCYJ20220818100205012", amount: "RMB 2M", period: "2022-2025", role: "Co-Investigator" },
+            { title: "Commissioned Training by China Telecom Sichuan Company", agency: "China Telecom", code: "", amount: "RMB 4.83M", period: "2018-2020", role: "Co-Investigator" }
+        ];
+
+        const patentsData = [
+            { id: "ZL 202511588690.1", title: "A Fast Road Network Visualization Method, System, Terminal, and Storage based on Piecewise-linear and Gaussian Kernel Functions", date: "Feb 27, 2026", authors: "Tsz Nam Chan, Hongwei Ye, Bojian Zhu, Leong Hou U, Dingming Wu, Ruisheng Wang, Joshua Zhexue Huang", pdf: "pdf/2025115886901.pdf" },
+            { id: "ZL 202511485741.8", title: "Spatiotemporal Network K-function Plot Generation Method, System, Terminal, and Storage based on Range Tree and Prefix Count Array", date: "Feb 13, 2026", authors: "Tsz Nam Chan, Leong Hou U, Yun Peng, Dingming Wu, Jianliang Xu, Christian S. Jensen", pdf: "pdf/2025114857418.pdf" },
+            { id: "ZL 202510733555.5", title: "A Method, System, Terminal, and Storage for Distribution-and-Aggregation-based Spatiotemporal K-function Plot Generation", date: "Aug 12, 2025", authors: "Tsz Nam Chan, Bojian Zhu, Dingming Wu, Renchi Yang, Ruisheng Wang", pdf: "pdf/2025107335555.pdf" },
+            { id: "ZL 202510696033.2", title: "A Method, System, Terminal, and Storage for Block-Compression-based Spatiotemporal Kernel Density Visualization", date: "Aug 5, 2025", authors: "Tsz Nam Chan, Yue Zhong, Leong Hou U, Dingming Wu, Wei Tu, Ruisheng Wang, Joshua Zhexue Huang", pdf: "pdf/2025106960332.pdf" },
+            { id: "ZL 202411977346.7", title: "A Method, System, and Terminal for Spatiotemporal Kernel Density Visualization via PREFIX-Matrix Structure", date: "May 16, 2025", authors: "Tsz Nam Chan, Pak Lon Ip, Bojian Zhu, Leong Hou U, Dingming Wu, Jianliang Xu, Christian S. Jensen", pdf: "pdf/2024119773467.pdf" },
+            { id: "ZL 202411529099.4", title: "A Method and System for Generating Line Density Visualization via Length-Aggregation-based Grid Structure", date: "Mar 18, 2025", authors: "Tsz Nam Chan, Bojian Zhu, Dingming Wu, Yun Peng, Leong Hou U", pdf: "pdf/2024115290994.pdf" },
+            { id: "ZL 202310430972.3", title: "A Frequent Subgraph Mining Method and Terminal Device", date: "Nov 28, 2023", authors: "Zhaofen Zhang, Dingming Wu, Yixin Wu, Kezhong Lu, Zhexue Huang", pdf: "pdf/20231128.pdf" },
+            { id: "ZL 202111472336.4", title: "Knowledge Graph Embedding Model Training Method, Device, Electronic Equipment, and Medium", date: "May 20, 2022", authors: "Dingming Wu, Yuqi Zhou, Kezhong Lu, Jinying Zhan", pdf: "pdf/20220520.pdf" },
+            { id: "ZL 202210026117.1", title: "Skyline Position Node Query Method, Device, and Equipment in RDF Data", date: "May 17, 2022", authors: "Dingming Wu, Zhaofen Zhang, Kezhong Lu", pdf: "pdf/20220517.pdf" },
+            { id: "ZL 201810294059.4", title: "An Activity-and-Partner Retrieval Method and System", date: "Aug 6, 2021", authors: "Dingming Wu, Yi Zhu, Zhexue Huang", pdf: "pdf/20210806.pdf" },
+            { id: "ZL 201710821358.4", title: "Mining Method and Device for Maximum Diverse Frequent Patterns Based on Classification Trees", date: "Dec 4, 2020", authors: "Dingming Wu, Dexin Luo, Zhexue Huang", pdf: "pdf/20201204.pdf" }
+        ];
+
+        const teachingData = {
+            current: [
+                { name: "Algorithm Design and Analysis", year: "2016-2026", href: "algorithm/algorithm.html" },
+                { name: "Ascend C Operator Developmemt", year: "2025-2026", href: "ascend/index.html" },
+                { name: "Research Method and Academic Writing (PhD Course)", year: "2024-2025" },
+                { name: "Data Structures", year: "2019-2024" },
+                { name: "Professional English (PhD Course)", year: "2021-2022" }
+            ],
+            past: [
+                { name: "Big Data Processing and Analysis", year: "2019" },
+                { name: "Introduction to Big Data", year: "2017-2018" },
+                { name: "Information Retrieval", year: "2016-2017" },
+                { name: "Search Engine Technology", year: "2016" },
+                { name: "Human-Computer Interaction", year: "2015" }
+            ]
+        };
+
+        const studentData = {
+            phd: [
+                { name: "Jian Lin", year: "2026-current" },
+                { name: "Zixu Xiong", year: "2025-current" },
+                { name: "Anastasiia Garanina", year: "2025-current" },
+                { name: "Siyue Wu", year: "2022-current" }
+            ],
+            master: [
+                { name: "Haonan Zhang", year: "2025-current" },
+                { name: "Xunan Wei", year: "2025-current" },
+                { name: "Mingshen Liao", year: "2024-current" },
+                { name: "Yihua Huang", year: "2024-current" },
+                { name: "Kexin Li", year: "2024-current" },
+                { name: "Yiwen Luo", year: "2024-current" },
+                { name: "Yang Liu", year: "2023-current" },
+                { name: "Shuangyi Huang", year: "2023-current" },
+                { name: "Kaitao Wang", year: "2023-current" },
+                { name: "Guowei Xiong", year: "2023-current" },
+                { name: "Haozhao Wu", year: "2023-current" }
+            ],
+            alumni: [
+                { name: "Weike Tang", dest: "Tencent", year: "2022-2025", honor: "Excellent Graduate" },
+                { name: "Junyi Quan", dest: "Tencent", year: "2022-2025" },
+                { name: "Xianhong Zhuo", dest: "PING AN BANK", year: "2022-2025" },
+                { name: "Jingyan Huang", dest: "Midea Group", year: "2022-2025" },
+                { name: "Xinying Lai", dest: "Huawei", year: "2021-2024" },
+                { name: "Zhaofen Zhang", dest: "SANDSTONE", year: "2021-2024", honor: "Excellent Graduate" },
+                { name: "Chujie Yuan", dest: "ByteDance", year: "2021-2024" },
+                { name: "Huabin Lv", dest: "9Realms", year: "2021-2024" },
+                { name: "Sitong Zhu", dest: "Guangzhou Taxation Bureau", year: "2021-2024" },
+                { name: "Mi Li", dest: "CMB Network Technology", year: "2020-2023" },
+                { name: "Yuqi Zhou", dest: "Shenzhen Social Insurance", year: "2020-2023" },
+                { name: "Yixin Wu", dest: "China Life", year: "2020-2023" },
+                { name: "Guoliang Du", dest: "Guangzhou Kaimei Tech", year: "2020-2023" },
+                { name: "Junjie Lin", dest: "CMB Network Technology", year: "2019-2022" },
+                { name: "Jinying Zhan", dest: "Huawei", year: "2019-2022" },
+                { name: "Song Wu", dest: "PhD @ Utrecht Univ", year: "2019-2022" },
+                { name: "Meng Chen", dest: "MedBot", year: "2019-2022" },
+                { name: "Xinchen Li", dest: "PhD @ Shenzhen Univ", year: "2018-2021" },
+                { name: "Hao Zhou", dest: "Huawei", year: "2017-2020" },
+                { name: "Can Hou", dest: "CCBFintech", year: "2017-2020" },
+                { name: "Dexin Luo", dest: "Tencent", year: "2016-2019" },
+                { name: "Yi Zhu", dest: "ByteDance", year: "2016-2019", honor: "Excellent Graduate" }
+            ]
+        };
+
+        const educationData = [
+            { year: "2008-2011", title: "Ph.D., Computer Science", org: "Aalborg University, Denmark" },
+            { year: "2005-2008", title: "M.Sci., Computer Science", org: "Peking University, China" },
+            { year: "2001-2005", title: "B. Eng., Computer Science", org: "Huazhong University of Science and Technology" }
+        ];
+        const positionsData = [
+            { year: "2019-Present", title: "Associate Professor", org: "College of CS & SE, Shenzhen University" },
+            { year: "2015-2019", title: "Assistant Professor", org: "College of CS & SE, Shenzhen University" },
+            { year: "2013-2015", title: "Postdoc", org: "Dept. of CS, The University of Hong Kong" },
+            { year: "2011-2013", title: "Postdoc", org: "Dept. of CS, Hong Kong Baptist University" }
+        ];
+        const jointData = [
+            { year: "2023-Present", title: "Joint Master Program Supervisor", org: "Great Bay University, Dong Guan, Guangdong" },
+            { year: "2023-Present", title: "Joint Master Program Supervisor", org: "Shenzhen Institute for Quantum Science and Engineering" },
+            { year: "2019-2025", title: "Joint Master Program Supervisor", org: "Kazan Federal University, Russia" },
+            { year: "2020-2023", title: "Joint Master Program Supervisor", org: "Huawei" }
+        ];
+        const activitiesData = [
+            { year: "2027", items: [{ label: "Senior PC Member", type: "chair", venues: "ICDE" }] },
+            { year: "2026", items: [
+                { label: "Area Chair", type: "chair", venues: "SIGIR" },
+                { label: "PC Member", type: "pc", venues: "KDD, ICDE, SIGIR" }
+            ] },
+            { year: "2025", items: [{ label: "PC Member", type: "pc", venues: "KDD, ICDE" }] },
+            { year: "2024", items: [{ label: "PC Member", type: "pc", venues: "KDD" }] },
+            { year: "2022", items: [{ label: "PC Member", type: "pc", venues: "ICDE, AAAI" }] },
+            { year: "2021", items: [{ label: "PC Member", type: "pc", venues: "IJCAI, WISE" }] }
+        ];
+        const honorsData = [
+            { title: "Graduate Education Innovation Program", year: "2024", desc: "Principal Investigator, SZU - Shenzhen International Quantum Research Institute Joint Graduate Training Practice Base" },
+            { title: "First Prize, 9th National Competition", year: "2024", desc: "Experimental Teaching Cases in Computer Science Courses - Excellent Case" },
+            { title: "Guangdong Province First-Class Course", year: "2023", desc: "Algorithm Design and Analysis" },
+            { title: "Excellent Paper Award (2nd Prize)", year: "2023", desc: "Guangdong Computer Society. Paper: Density-Based Top-K Spatial Textual Clusters Retrieval (IEEE TKDE)" },
+            { title: "Excellent Paper Award (2nd Prize)", year: "2021", desc: "Guangdong Computer Society. Paper: Density-Based Place Clustering Using Geo-Social Network Data (IEEE TKDE)" },
+            { title: "Shenzhen Univ Teaching Achievement (1st Prize)", year: "2021", desc: "Innovation and Practice of Dual-Entity Collaborative Training of Master of Computer Engineering" }
+        ];
+
+        const navItems = [
+            { id: 'home', label: 'Home', icon: 'ph-house' },
+            { id: 'research', label: 'Research', icon: 'ph-cpu' },
+            { id: 'publications', label: 'Publications', icon: 'ph-book' },
+            { id: 'projects', label: 'Projects', icon: 'ph-stack' },
+            { id: 'patents', label: 'Patents', icon: 'ph-scroll' },
+            { id: 'teaching', label: 'Teaching', icon: 'ph-chalkboard-teacher' },
+            { id: 'team', label: 'Team', icon: 'ph-users' },
+            { id: 'cv', label: 'Career', icon: 'ph-briefcase' }
+        ];
+
+        // --- Bold helper for author lists ---
+        const boldName = (s) => ({ __html: s.replace('Dingming Wu', '<b class="text-white">Dingming Wu</b>') });
+
+        // --- Components ---
+        const SectionHeader = ({ title, subtitle }) => (
+            <div className="mb-6">
+                <span className="text-cyan-500 font-mono text-[11px] tracking-widest uppercase mb-1 block">
+                    // {subtitle}
+                </span>
+                <h2 className="text-2xl font-bold text-white tracking-tight">{title}</h2>
+                <div className="h-0.5 w-14 bg-gradient-to-r from-cyan-500 to-transparent mt-3"></div>
+            </div>
+        );
+
+        const TopBar = ({ open, setOpen }) => (
+            <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-950/85 backdrop-blur-md border-b border-white/5">
+                <div className="px-4 py-3 flex justify-between items-center">
+                    <div className="flex items-center gap-2" onClick={() => { setOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+                        <div className="w-7 h-7 bg-cyan-500/20 rounded flex items-center justify-center text-cyan-400">
+                            <i className="ph-bold ph-code text-base"></i>
+                        </div>
+                        <span className="font-mono font-bold text-base tracking-tight text-white">WU</span>
+                    </div>
+                    <button
+                        onClick={() => setOpen(!open)}
+                        aria-label="Toggle menu"
+                        className="p-2 rounded-md bg-slate-900/70 border border-white/10 text-cyan-300 active:bg-slate-800"
+                    >
+                        <i className={`ph-bold ${open ? 'ph-x' : 'ph-list'} text-xl`}></i>
+                    </button>
+                </div>
+            </nav>
+        );
+
+        const MobileMenu = ({ open, onSelect }) => {
+            if (!open) return null;
+            return (
+                <div className="fixed top-[52px] left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-lg border-b border-cyan-500/20 menu-anim">
+                    <div className="px-4 py-3 grid grid-cols-2 gap-2">
+                        {navItems.map(item => (
+                            <button
+                                key={item.id}
+                                onClick={() => onSelect(item.id)}
+                                className="flex items-center gap-2 px-3 py-3 rounded-lg bg-slate-900/70 border border-white/5 text-slate-200 active:bg-cyan-500/20 active:border-cyan-500/40"
+                            >
+                                <i className={`ph-fill ${item.icon} text-cyan-400 text-lg`}></i>
+                                <span className="font-mono text-sm">{item.label}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const Hero = () => (
+            <section id="home" className="pt-20 pb-10 px-4">
+                <div className="flex flex-col items-center text-center gap-5">
+                    <div className="relative w-44 h-56 shrink-0">
+                        <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/25 to-blue-600/25 rounded-2xl rotate-6 border border-white/5"></div>
+                        <div className="absolute inset-0 bg-slate-900 rounded-2xl border border-cyan-500/30 overflow-hidden shadow-2xl">
+                            <img src="ChatGPT Image May 14, 2026, 11_14_36 AM.png" alt="Dingming Wu" className="w-full h-full object-cover" />
+                        </div>
+                    </div>
+
+                    <h1 className="text-4xl font-bold text-white tracking-tight leading-tight">
+                        Dingming <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Wu</span>
+                    </h1>
+
+                    <p className="text-base text-slate-400 font-light">
+                        Associate Professor at <span className="text-cyan-300">Shenzhen University</span>
+                    </p>
+
+                    <p className="text-sm text-slate-400 leading-relaxed max-w-md">
+                        Advancing the frontiers of Machine Learning, Large Graph Analytics, and Spatio-Temporal Intelligence. Focusing on challenges in manufacturing, business, and healthcare.
+                    </p>
+
+                    <div className="flex flex-wrap justify-center gap-2 pt-2">
+                        <a href={`mailto:${personalInfo.email}`} className="flex items-center gap-2 px-3 py-2 bg-slate-900 rounded border border-slate-700 active:border-cyan-500 text-sm text-slate-300 break-anywhere">
+                            <i className="ph-fill ph-envelope text-cyan-500"></i>
+                            <span>{personalInfo.email}</span>
+                        </a>
+                        <div className="flex items-center gap-2 px-3 py-2 bg-slate-900 rounded border border-slate-700 text-sm text-slate-300">
+                            <i className="ph-fill ph-map-pin text-cyan-500"></i>
+                            <span>Shenzhen, China</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        );
+
+        const Research = () => (
+            <section id="research" className="py-12 px-4">
+                <SectionHeader title="Research Interests" subtitle="AREAS OF FOCUS" />
+                <div className="space-y-4">
+                    {researchInterestsData.map(item => (
+                        <div key={item.id} className="glass-panel p-4 rounded-xl">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="w-9 h-9 rounded-lg bg-cyan-500/10 flex items-center justify-center shrink-0">
+                                    <i className={`ph-fill ph-${item.icon} text-lg text-cyan-400`}></i>
+                                </div>
+                                <h3 className="text-base font-bold text-white leading-tight">{item.title}</h3>
+                            </div>
+                            <ul className="text-sm text-slate-400 leading-relaxed space-y-1.5 list-disc pl-5 marker:text-cyan-500">
+                                {item.desc.map((p, idx) => <li key={idx}>{p}</li>)}
+                            </ul>
+                        </div>
+                    ))}
+                </div>
+            </section>
+        );
+
+        const Publications = () => {
+            const [tab, setTab] = useState('journals');
+            const tabs = [
+                { key: 'journals', label: 'Journals', count: publicationsData.journals.length },
+                { key: 'conferences', label: 'Conferences', count: publicationsData.conferences.length },
+                { key: 'books', label: 'Books', count: booksData.length }
+            ];
+            return (
+                <section id="publications" className="py-12 px-4">
+                    <SectionHeader title="Publications" subtitle="RESEARCH OUTPUT" />
+                    <div className="flex flex-wrap gap-2 mb-5">
+                        {tabs.map(t => (
+                            <button
+                                key={t.key}
+                                onClick={() => setTab(t.key)}
+                                className={`px-3 py-1.5 rounded text-xs font-bold font-mono transition-colors ${tab === t.key ? 'bg-cyan-500 text-black' : 'bg-slate-800 text-slate-400 active:bg-slate-700'}`}
+                            >
+                                {t.label} ({t.count})
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="space-y-3">
+                        {tab === 'journals' && publicationsData.journals.map((pub, idx) => (
+                            <PubCard key={idx} pub={pub} />
+                        ))}
+                        {tab === 'conferences' && publicationsData.conferences.map((pub, idx) => (
+                            <PubCard key={idx} pub={pub} />
+                        ))}
+                        {tab === 'books' && booksData.map((book, idx) => (
+                            <div key={idx} className="glass-panel p-4 rounded-lg border-l-4 border-l-purple-500">
+                                <div className="flex gap-3 items-start">
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="text-sm font-bold text-white mb-1.5 break-anywhere">{book.title}</h3>
+                                        <div className="text-xs text-purple-400 font-mono mb-1.5">{book.publisher}, {book.year}</div>
+                                        <p className="text-xs text-slate-400 break-anywhere" dangerouslySetInnerHTML={boldName(book.authors)}></p>
+                                    </div>
+                                    {book.cover && (
+                                        <a href={book.url} target="_blank" rel="noreferrer" className="shrink-0">
+                                            <img src={book.cover} alt={book.title} className="w-16 rounded shadow-lg border border-white/10" />
+                                        </a>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="mt-6 text-center">
+                        <a href="https://dblp.org/pid/81/6181.html" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs text-slate-400 active:text-cyan-400 border-b border-transparent">
+                            View Full List on DBLP <i className="ph-bold ph-arrow-up-right"></i>
+                        </a>
+                    </div>
+                </section>
+            );
+        };
+
+        const PubCard = ({ pub }) => (
+            <div className="glass-panel p-4 rounded-lg">
+                <div className="flex justify-between items-start gap-2 mb-1.5">
+                    <div className="text-xs font-mono text-cyan-400 break-anywhere">[{pub.id}] {pub.venue}, {pub.year}</div>
+                    <a href={pub.pdf} target="_blank" rel="noreferrer" className="shrink-0 p-1 text-slate-500 active:text-cyan-400" title="PDF">
+                        <i className="ph-fill ph-file-pdf text-2xl"></i>
+                    </a>
+                </div>
+                <h3 className="text-sm font-bold text-white mb-1.5 leading-snug break-anywhere">{pub.title}</h3>
+                <p className="text-xs text-slate-400 break-anywhere" dangerouslySetInnerHTML={boldName(pub.authors)}></p>
+            </div>
+        );
+
+        const Projects = () => (
+            <section id="projects" className="py-12 px-4">
+                <SectionHeader title="Projects" subtitle="FUNDING" />
+                <div className="space-y-3">
+                    {projectsData.map((proj, idx) => (
+                        <div key={idx} className="glass-panel p-4 rounded-xl">
+                            <div className="flex flex-wrap justify-between items-center gap-2 mb-2">
+                                <span className={`text-[11px] font-mono px-2 py-0.5 rounded ${proj.role === 'Principal Investigator' ? 'bg-cyan-500/20 text-cyan-300' : 'bg-purple-500/20 text-purple-300'}`}>
+                                    {proj.role}
+                                </span>
+                                <span className="text-xs text-slate-500 font-mono">{proj.period}</span>
+                            </div>
+                            <h3 className="text-sm font-bold text-white mb-1 leading-snug break-anywhere">{proj.title}</h3>
+                            <p className="text-xs text-slate-400 mb-0.5 break-anywhere"><span className="text-slate-500">Agency:</span> {proj.agency}</p>
+                            {proj.code && <p className="text-xs text-slate-500 font-mono mb-0.5 break-anywhere">Code: {proj.code}</p>}
+                            <p className="text-xs text-cyan-500 font-mono">{proj.amount}</p>
+                        </div>
+                    ))}
+                </div>
+            </section>
+        );
+
+        const Patents = () => (
+            <section id="patents" className="py-12 px-4">
+                <SectionHeader title="Patents" subtitle="INTELLECTUAL PROPERTY" />
+                <div className="space-y-3">
+                    {patentsData.map((p, idx) => (
+                        <div key={idx} className="p-4 bg-slate-900/80 rounded border border-slate-800">
+                            <div className="flex justify-between items-center gap-2 mb-2">
+                                <span className="bg-slate-950 px-2 py-1 rounded border border-white/5 font-mono text-[11px] text-cyan-500 break-anywhere">
+                                    {p.id}
+                                </span>
+                                <a href={p.pdf} target="_blank" rel="noreferrer" className="shrink-0 text-slate-500 active:text-cyan-400" title="Patent">
+                                    <i className="ph-fill ph-file-pdf text-2xl"></i>
+                                </a>
+                            </div>
+                            <h4 className="text-sm text-white font-bold leading-snug mb-1 break-anywhere">{p.title}</h4>
+                            <p className="text-xs text-slate-400 mb-1 break-anywhere" dangerouslySetInnerHTML={boldName(p.authors)}></p>
+                            <p className="text-[11px] text-slate-500 font-mono">{p.date}</p>
+                        </div>
+                    ))}
+                </div>
+            </section>
+        );
+
+        const Teaching = () => (
+            <section id="teaching" className="py-12 px-4">
+                <SectionHeader title="Teaching" subtitle="KNOWLEDGE TRANSFER" />
+                <div className="bg-slate-950/80 p-4 rounded-xl border border-white/5 mb-4">
+                    <h4 className="text-cyan-400 font-mono text-xs mb-3 uppercase tracking-widest">Current</h4>
+                    <ul className="space-y-2.5">
+                        {teachingData.current.map((c, i) => <CourseItem key={i} {...c} />)}
+                    </ul>
+                </div>
+                <div className="bg-slate-950/80 p-4 rounded-xl border border-white/5">
+                    <h4 className="text-slate-500 font-mono text-xs mb-3 uppercase tracking-widest">Past</h4>
+                    <ul className="space-y-2.5">
+                        {teachingData.past.map((c, i) => <CourseItem key={i} {...c} />)}
+                    </ul>
+                </div>
+            </section>
+        );
+
+        const CourseItem = ({ name, year, href }) => (
+            <li className="flex justify-between items-start gap-3 border-b border-white/5 pb-2 last:border-0 last:pb-0">
+                <div className="flex flex-wrap items-center gap-2 flex-1 min-w-0">
+                    <span className="text-slate-300 text-sm break-anywhere">{name}</span>
+                    {href && (
+                        <a href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[11px] font-mono bg-cyan-500/10 text-cyan-400 border-cyan-500/30 active:bg-cyan-500/20">
+                            <i className="ph-bold ph-arrow-up-right" style={{fontSize: 10}}></i>
+                            课程资料
+                        </a>
+                    )}
+                </div>
+                <span className="font-mono text-slate-500 text-xs whitespace-nowrap pt-0.5">{year}</span>
+            </li>
+        );
+
+        const Team = () => {
+            const [tab, setTab] = useState('phd');
+            const tabs = [
+                { key: 'phd', label: 'PhD', count: studentData.phd.length, color: 'green' },
+                { key: 'master', label: 'Master', count: studentData.master.length, color: 'blue' },
+                { key: 'alumni', label: 'Alumni', count: studentData.alumni.length, color: 'slate' }
+            ];
+            return (
+                <section id="team" className="py-12 px-4">
+                    <SectionHeader title="Research Team" subtitle="STUDENTS & ALUMNI" />
+                    <div className="flex flex-wrap gap-2 mb-5">
+                        {tabs.map(t => (
+                            <button
+                                key={t.key}
+                                onClick={() => setTab(t.key)}
+                                className={`px-3 py-1.5 rounded text-xs font-bold font-mono transition-colors ${tab === t.key ? 'bg-cyan-500 text-black' : 'bg-slate-800 text-slate-400 active:bg-slate-700'}`}
+                            >
+                                {t.label} ({t.count})
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="bg-slate-950/80 p-4 rounded-xl border border-white/5">
+                        {tab !== 'alumni' && (
+                            <div className="space-y-2.5">
+                                {studentData[tab].map((stu, i) => (
+                                    <div key={i} className="flex justify-between items-center gap-2 border-b border-white/5 pb-2 last:border-0 last:pb-0">
+                                        <span className="text-slate-300 text-sm break-anywhere">{stu.name}</span>
+                                        <span className="font-mono text-[11px] text-slate-500 bg-slate-900 px-2 py-0.5 rounded whitespace-nowrap">{stu.year}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        {tab === 'alumni' && (
+                            <div className="space-y-3">
+                                {studentData.alumni.map((stu, i) => (
+                                    <div key={i} className="p-3 rounded bg-slate-900/50 border border-white/5">
+                                        <div className="flex justify-between items-start gap-2 mb-1">
+                                            <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                                                <span className="text-slate-300 text-sm">{stu.name}</span>
+                                                <span className="text-[10px] bg-slate-800 text-slate-400 px-1 rounded">Master</span>
+                                                {stu.honor && (
+                                                    <span className="text-[10px] bg-yellow-500/10 text-yellow-500 px-1 rounded border border-yellow-500/20 flex items-center gap-1">
+                                                        <i className="ph-fill ph-medal"></i> {stu.honor}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <span className="text-[11px] font-mono text-slate-500 whitespace-nowrap pt-0.5">{stu.year}</span>
+                                        </div>
+                                        <span className="text-cyan-500 text-xs flex items-center gap-1 break-anywhere">
+                                            <i className="ph-bold ph-caret-right" style={{fontSize: 10}}></i> {stu.dest}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </section>
+            );
+        };
+
+        const Timeline = ({ items }) => (
+            <div className="space-y-5 pl-4 border-l-2 border-slate-800">
+                {items.map((it, i) => (
+                    <div key={i} className="relative">
+                        <div className="absolute -left-[21px] top-1.5 w-3 h-3 bg-slate-950 border-2 border-cyan-500 rounded-full"></div>
+                        <span className="block font-mono text-cyan-500 text-xs mb-0.5">{it.year}</span>
+                        <h4 className="text-white font-bold text-sm break-anywhere">{it.title}</h4>
+                        <p className="text-slate-400 text-xs break-anywhere">{it.org}</p>
+                    </div>
+                ))}
+            </div>
+        );
+
+        const Career = () => (
+            <section id="cv" className="py-12 px-4">
+                <SectionHeader title="Career" subtitle="ACADEMIC & PROFESSIONAL HISTORY" />
+
+                <div className="space-y-8">
+                    <div>
+                        <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+                            <i className="ph-fill ph-graduation-cap text-cyan-400"></i> Education
+                        </h3>
+                        <Timeline items={educationData} />
+                    </div>
+
+                    <div>
+                        <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+                            <i className="ph-fill ph-briefcase text-cyan-400"></i> Academic Positions
+                        </h3>
+                        <Timeline items={positionsData} />
+                    </div>
+
+                    <div>
+                        <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+                            <i className="ph-fill ph-share-network text-cyan-400"></i> Joint Appointments
+                        </h3>
+                        <Timeline items={jointData} />
+                    </div>
+
+                    <div>
+                        <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+                            <i className="ph-fill ph-pen-nib text-cyan-400"></i> Professional Activities
+                        </h3>
+                        <div className="bg-slate-950/80 p-4 rounded border border-white/5 space-y-3">
+                            {activitiesData.map((a, i) => (
+                                <div key={i} className="flex gap-3 items-start">
+                                    <span className="font-mono text-cyan-500 text-xs w-10 pt-0.5 shrink-0">{a.year}</span>
+                                    <div className="border-l border-slate-700 pl-3 flex-1 space-y-1.5">
+                                        {a.items.map((act, j) => (
+                                            <div key={j} className="flex flex-wrap items-center gap-2">
+                                                <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border whitespace-nowrap ${act.type === 'chair' ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/30' : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30'}`}>
+                                                    {act.label}
+                                                </span>
+                                                <span className="text-slate-300 text-xs break-anywhere">{act.venues}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+                            <i className="ph-fill ph-trophy text-yellow-500"></i> Honors & Awards
+                        </h3>
+                        <div className="space-y-3">
+                            {honorsData.map((h, i) => (
+                                <div key={i} className="p-3 bg-slate-800/50 rounded border border-white/5">
+                                    <div className="flex justify-between items-start gap-2 mb-1">
+                                        <p className="text-white font-bold text-sm break-anywhere">{h.title}</p>
+                                        <span className="text-xs font-mono text-yellow-500 whitespace-nowrap">{h.year}</span>
+                                    </div>
+                                    <p className="text-xs text-slate-400 break-anywhere">{h.desc}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </section>
+        );
+
+        const Footer = () => (
+            <footer className="py-10 px-4 border-t border-white/5 bg-black/40 backdrop-blur-md text-center">
+                <h2 className="text-xl font-bold text-white mb-5">Get in Touch</h2>
+                <div className="flex justify-center mb-5">
+                    <a href={`mailto:${personalInfo.email2}`} className="flex items-center gap-2 text-slate-300 text-sm break-anywhere">
+                        <i className="ph-fill ph-envelope text-cyan-500"></i>
+                        {personalInfo.email2}
+                    </a>
+                </div>
+                <div className="flex items-start justify-center gap-2 text-slate-500 text-xs mb-5 break-anywhere">
+                    <i className="ph-fill ph-map-pin text-cyan-500 mt-0.5 shrink-0"></i>
+                    <span>{personalInfo.address}</span>
+                </div>
+                <p className="text-[11px] text-slate-600 font-mono mb-3">
+                    © {new Date().getFullYear()} Dingming Wu. All Rights Reserved.<br/>
+                    Designed with AI.
+                </p>
+                <a href="index.html?desktop=1" className="inline-flex items-center gap-1.5 text-xs text-slate-500 active:text-cyan-400">
+                    <i className="ph-bold ph-desktop"></i> View Desktop Version
+                </a>
+            </footer>
+        );
+
+        const App = () => {
+            const [menuOpen, setMenuOpen] = useState(false);
+
+            const scrollTo = (id) => {
+                setMenuOpen(false);
+                setTimeout(() => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        const y = el.getBoundingClientRect().top + window.scrollY - 56;
+                        window.scrollTo({ top: y, behavior: 'smooth' });
+                    }
+                }, 50);
+            };
+
+            return (
+                <div className="min-h-screen selection:bg-cyan-500/30 selection:text-cyan-200">
+                    <TopBar open={menuOpen} setOpen={setMenuOpen} />
+                    <MobileMenu open={menuOpen} onSelect={scrollTo} />
+                    <Hero />
+                    <Research />
+                    <Publications />
+                    <Projects />
+                    <Patents />
+                    <Teaching />
+                    <Team />
+                    <Career />
+                    <Footer />
+                </div>
+            );
+        };
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
