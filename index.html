@@ -111,6 +111,7 @@
 
         const publicationsData = {
             journals: [
+                { id: "J21", title: "Approximate DBSCAN via Density-Biased Sampling and Kernel Density Estimation", venue: "Proc. ACM Manag. Data 4(3)", year: "2026", authors: "Jian Lin, Siyue Wu, Dingming Wu, Tsz Nam Chan" },
                 { id: "J20", title: "GREAT: Generalized Reservoir Sampling based Triangle Counting Estimation over Streaming Graphs", venue: "Proc. VLDB Endow. 18(7)", year: "2025", authors: "Siyue Wu, Dingming Wu, Sinhong Cheuk, Tsz Nam Chan, Kezhong Lu", pdf: "pdf/p2031-wu.pdf" },
                 { id: "J19", title: "Efficient and Accurate PageRank Approximation on Large Graphs", venue: "Proc. ACM Manag. Data 2(4)", year: "2024", authors: "Siyue Wu, Dingming Wu, Junyi Quan, Tsz Nam Chan, Kezhong Lu", pdf: "pdf/3677132.pdf" },
                 { id: "J18", title: "LION: Fast and High-Resolution Network Kernel Density Visualization", venue: "Proc. VLDB Endow. 17(6)", year: "2024", authors: "Tsz Nam Chan, Rui Zang, Bojian Zhu, Leong Hou U, Dingming Wu, Jianliang Xu", pdf: "pdf/3648160.3648168.pdf" },
@@ -133,6 +134,13 @@
                 { id: "J1", title: "Efficient Retrieval of the Top-k Most Relevant Spatial Web Objects", venue: "Proc. VLDB Endow. 2(1)", year: "2009", authors: "Gao Cong, Christian S. Jensen, Dingming Wu", pdf: "pdf/1687627.1687666.pdf" }
             ],
             conferences: [
+                { id: "C23", title: "PLAN: Fast and Approximate Gaussian Kernel Density Visualization in Road Networks", venue: "ICDE", year: "2026", authors: "Tsz Nam Chan, Hongwei Ye, Bojian Zhu, Leong Hou U, Dingming Wu, Ruisheng Wang, Joshua Zhexue Huang" },
+                { id: "C22", title: "DNA: A Distribution-and-Aggregation Solution for Spatiotemporal K-function-based Analysis", venue: "ICDE", year: "2026", authors: "Tsz Nam Chan, Bojian Zhu, Dingming Wu, Renchi Yang, Ruisheng Wang" },
+                { id: "C21", title: "STARS: A Sampling and Threshold Sharing Solution for Network K-function Analytics", venue: "SIGKDD", year: "2026", authors: "Hongwei Ye, Tsz Nam Chan, Leong Hou U, Dingming Wu, Wei Tu, Ruisheng Wang, Joshua Zhexue Huang" },
+                { id: "C20", title: "An Efficient and Accurate Grid Compression Solution for Point-to-Line Nearest Neighbor Search", venue: "SIGKDD", year: "2026", authors: "Hongwei Ye, Tsz Nam Chan, Dingming Wu, Leong Hou U, Ruisheng Wang" },
+                { id: "C19", title: "MASS: A Complexity-Optimal Solution for Product Kernel Density Visualization", venue: "SIGKDD", year: "2026", authors: "Yue Zhong, Tsz Nam Chan, Leong Hou U, Dingming Wu, Wei Tu, Ruisheng Wang, Joshua Zhexue Huang" },
+                { id: "C18", title: "EARTH: Accelerating Spatiotemporal Network K-function-based Analytics", venue: "SIGKDD", year: "2026", authors: "Tsz Nam Chan, Hongwei Ye, Leong Hou U, Yun Peng, Dingming Wu, Jianliang Xu, Christian S. Jensen", award: "Research Track Honorable Mention Award" },
+                { id: "C17", title: "A Fast and Accurate Block Compression Solution for Spatiotemporal Kernel Density Visualization", venue: "SIGKDD", year: "2025", authors: "Yue Zhong, Tsz Nam Chan, Leong Hou U, Dingming Wu, Wei Tu, Ruisheng Wang, Joshua Zhexue Huang" },
                 { id: "C16", title: "Large-Scale Spatiotemporal Kernel Density Visualization", venue: "ICDE", year: "2025", authors: "Tsz Nam Chan, Pak Lon Ip, Bojian Zhu, Leong Hou U, Dingming Wu, Jianliang Xu, Christian S. Jensen", pdf: "pdf/Large-Scale_Spatiotemporal_Kernel_Density_Visualization.pdf" },
                 { id: "C15", title: "Spatially Compact Dense Block Mining in Spatial Tensors", venue: "KDD", year: "2025", authors: "Weike Tang, Dingming Wu, Tsz Nam Chan, Kezhong Lu", pdf: "pdf/3690624.3709221.pdf" },
                 { id: "C14", title: "A Fast Line Density Visualization Plugin for Geographic Information Systems", venue: "SIGMOD (Companion)", year: "2025", authors: "Tsz Nam Chan, Bojian Zhu, Dingming Wu, Yun Peng, Leong Hou U, Wei Tu, Ruisheng Wang", pdf: "pdf/3722212.3725075.pdf" },
@@ -433,11 +441,14 @@
                                             <div className="text-base font-mono text-cyan-400 mb-1">[{pub.id}] {pub.venue}, {pub.year}</div>
                                             <h3 className="text-lg font-bold text-white mb-2">{pub.title}</h3>
                                             <p className="text-base text-slate-400" dangerouslySetInnerHTML={{ __html: pub.authors.replace('Dingming Wu', '<b class="text-white">Dingming Wu</b>') }}></p>
+                                            {pub.award && <p className="text-base text-yellow-500 mt-2 font-mono">{pub.award}</p>}
                                         </div>
                                         {/* PDF ICON LINK */}
-                                        <a href={pub.pdf} target="_blank" rel="noreferrer" className="shrink-0 p-2 text-slate-500 hover:text-cyan-400 transition-colors" title="Download PDF">
-                                            <FileText size={36} />
-                                        </a>
+                                        {pub.pdf && (
+                                            <a href={pub.pdf} target="_blank" rel="noreferrer" className="shrink-0 p-2 text-slate-500 hover:text-cyan-400 transition-colors" title="Download PDF">
+                                                <FileText size={36} />
+                                            </a>
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -449,11 +460,14 @@
                                             <div className="text-base font-mono text-cyan-400 mb-1">[{pub.id}] {pub.venue}, {pub.year}</div>
                                             <h3 className="text-lg font-bold text-white mb-2">{pub.title}</h3>
                                             <p className="text-base text-slate-400" dangerouslySetInnerHTML={{ __html: pub.authors.replace('Dingming Wu', '<b class="text-white">Dingming Wu</b>') }}></p>
+                                            {pub.award && <p className="text-base text-yellow-500 mt-2 font-mono">{pub.award}</p>}
                                         </div>
                                         {/* PDF ICON LINK */}
-                                        <a href={pub.pdf} target="_blank" rel="noreferrer" className="shrink-0 p-2 text-slate-500 hover:text-cyan-400 transition-colors" title="Download PDF">
-                                            <FileText size={36} />
-                                        </a>
+                                        {pub.pdf && (
+                                            <a href={pub.pdf} target="_blank" rel="noreferrer" className="shrink-0 p-2 text-slate-500 hover:text-cyan-400 transition-colors" title="Download PDF">
+                                                <FileText size={36} />
+                                            </a>
+                                        )}
                                     </div>
                                 </div>
                             ))}
