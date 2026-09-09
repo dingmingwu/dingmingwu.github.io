@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <meta name="theme-color" content="#020617">
+    <meta name="theme-color" content="#fafbf7">
+    <script src="theme.js"></script>
     <title>Dingming Wu - Mobile</title>
 
     <!-- Tailwind CSS -->
@@ -19,59 +20,14 @@
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
-
-        html, body {
-            overflow-x: hidden;
-            max-width: 100vw;
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #020617;
-            color: #cbd5e1;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .font-mono { font-family: 'JetBrains Mono', monospace; }
-
-        .glass-panel {
-            background: rgba(20, 25, 35, 0.7);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 240, 255, 0.1);
-        }
-
-        /* Soft radial accent background (cheaper than canvas particles on phones) */
-        .mobile-bg {
-            position: fixed;
-            inset: 0;
-            z-index: -10;
-            pointer-events: none;
-            background:
-                radial-gradient(circle at 15% 10%, rgba(6, 182, 212, 0.18), transparent 45%),
-                radial-gradient(circle at 85% 90%, rgba(59, 130, 246, 0.14), transparent 45%),
-                #020617;
-        }
-
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-6px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        .menu-anim { animation: slideDown 0.18s ease-out; }
-
-        /* Better long-word breaking for narrow screens */
-        .break-anywhere {
-            overflow-wrap: anywhere;
-            word-break: break-word;
-        }
-    </style>
+    <link rel="stylesheet" href="theme.css">
 </head>
-<body>
-    <div class="mobile-bg"></div>
+<body class="mobile-page">
     <div id="root"></div>
 
     <script type="text/babel">
         const { useState, useEffect } = React;
+        const { ThemeSwitcher } = window.PortfolioTheme;
 
         // --- Data (kept in sync with index.html) ---
         const personalInfo = {
@@ -305,32 +261,36 @@
         ];
 
         // --- Bold helper for author lists ---
-        const boldName = (s) => ({ __html: s.replace('Dingming Wu', '<b class="text-white">Dingming Wu</b>') });
+        const boldName = (s) => ({ __html: s.replace('Dingming Wu', '<b class="text-[color:var(--ink)]">Dingming Wu</b>') });
 
         // --- Components ---
         const SectionHeader = ({ title, subtitle }) => (
-            <div className="mb-6">
-                <span className="text-cyan-500 font-mono text-[11px] tracking-widest uppercase mb-1 block">
-                    // {subtitle}
+            <div className="section-heading mb-6">
+                <span className="text-[color:var(--accent)] font-mono text-[11px] tracking-widest uppercase mb-1 block">
+                    {subtitle}
                 </span>
-                <h2 className="text-2xl font-bold text-white tracking-tight">{title}</h2>
-                <div className="h-0.5 w-14 bg-gradient-to-r from-cyan-500 to-transparent mt-3"></div>
+                <h2 className="text-2xl font-bold text-[color:var(--ink)] tracking-tight">{title}</h2>
+                <div className="section-rule"></div>
             </div>
         );
 
         const TopBar = ({ open, setOpen }) => (
-            <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-950/85 backdrop-blur-md border-b border-white/5">
+            <nav className="site-nav fixed top-0 left-0 right-0 z-50 bg-white/85 backdrop-blur-md border-b border-[var(--line)]">
                 <div className="px-4 py-3 flex justify-between items-center">
-                    <div className="flex items-center gap-2" onClick={() => { setOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
-                        <div className="w-7 h-7 bg-cyan-500/20 rounded flex items-center justify-center text-cyan-400">
-                            <i className="ph-bold ph-code text-base"></i>
+                    <button type="button" aria-label="Home" className="flex items-center gap-2" onClick={() => { setOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+                        <div className="brand-mark w-7 h-7 bg-[var(--tint)] rounded flex items-center justify-center text-[color:var(--accent)]">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M3 10.5 12 3l9 7.5M5 9v12h14V9M9 21v-8h6v8" />
+                            </svg>
                         </div>
-                        <span className="font-mono font-bold text-base tracking-tight text-white">WU</span>
-                    </div>
+                    </button>
+                    <ThemeSwitcher />
                     <button
                         onClick={() => setOpen(!open)}
                         aria-label="Toggle menu"
-                        className="p-2 rounded-md bg-slate-900/70 border border-white/10 text-cyan-300 active:bg-slate-800"
+                        aria-expanded={open}
+                        aria-controls="mobile-navigation"
+                        className="p-2 rounded-md bg-white/70 border border-[var(--line)] text-[color:var(--accent)] active:bg-[var(--soft)]"
                     >
                         <i className={`ph-bold ${open ? 'ph-x' : 'ph-list'} text-xl`}></i>
                     </button>
@@ -341,15 +301,15 @@
         const MobileMenu = ({ open, onSelect }) => {
             if (!open) return null;
             return (
-                <div className="fixed top-[52px] left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-lg border-b border-cyan-500/20 menu-anim">
+                <div id="mobile-navigation" className="mobile-menu fixed top-[52px] left-0 right-0 z-40 bg-white/95 backdrop-blur-lg border-b border-[var(--line-strong)] menu-anim">
                     <div className="px-4 py-3 grid grid-cols-2 gap-2">
                         {navItems.map(item => (
                             <button
                                 key={item.id}
                                 onClick={() => onSelect(item.id)}
-                                className="flex items-center gap-2 px-3 py-3 rounded-lg bg-slate-900/70 border border-white/5 text-slate-200 active:bg-cyan-500/20 active:border-cyan-500/40"
+                                className="flex items-center gap-2 px-3 py-3 rounded-lg bg-white/70 border border-[var(--line)] text-[color:var(--ink)] active:bg-[var(--tint)] active:border-[var(--line-strong)]"
                             >
-                                <i className={`ph-fill ${item.icon} text-cyan-400 text-lg`}></i>
+                                <i className={`ph-fill ${item.icon} text-[color:var(--accent)] text-lg`}></i>
                                 <span className="font-mono text-sm">{item.label}</span>
                             </button>
                         ))}
@@ -359,34 +319,34 @@
         };
 
         const Hero = () => (
-            <section id="home" className="pt-20 pb-10 px-4">
+            <section id="home" className="hero pt-20 pb-10 px-4">
                 <div className="flex flex-col items-center text-center gap-5">
-                    <div className="relative w-44 h-56 shrink-0">
-                        <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/25 to-blue-600/25 rounded-2xl rotate-6 border border-white/5"></div>
-                        <div className="absolute inset-0 bg-slate-900 rounded-2xl border border-cyan-500/30 overflow-hidden shadow-2xl">
+                    <div className="portrait relative w-44 h-56 shrink-0">
+                        <div className="portrait-backdrop absolute inset-0"></div>
+                        <div className="portrait-frame absolute inset-0 bg-white overflow-hidden">
                             <img src="ChatGPT Image May 14, 2026, 11_14_36 AM.png" alt="Dingming Wu" className="w-full h-full object-cover" />
                         </div>
                     </div>
 
-                    <h1 className="text-4xl font-bold text-white tracking-tight leading-tight">
-                        Dingming <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Wu</span>
+                    <h1 className="text-4xl font-bold text-[color:var(--ink)] tracking-tight leading-tight">
+                        Dingming <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--accent)] to-[var(--accent-end)]">Wu</span>
                     </h1>
 
-                    <p className="text-base text-slate-400 font-light">
-                        Associate Professor at <span className="text-cyan-300">Shenzhen University</span>
+                    <p className="text-base text-[color:var(--muted)] font-light">
+                        Associate Professor at <span className="text-[color:var(--accent)]">Shenzhen University</span>
                     </p>
 
-                    <p className="text-sm text-slate-400 leading-relaxed max-w-md">
+                    <p className="text-sm text-[color:var(--muted)] leading-relaxed max-w-md">
                         Advancing the frontiers of Machine Learning, Large Graph Analytics, and Spatio-Temporal Intelligence. Focusing on challenges in manufacturing, business, and healthcare.
                     </p>
 
                     <div className="flex flex-wrap justify-center gap-2 pt-2">
-                        <a href={`mailto:${personalInfo.email}`} className="flex items-center gap-2 px-3 py-2 bg-slate-900 rounded border border-slate-700 active:border-cyan-500 text-sm text-slate-300 break-anywhere">
-                            <i className="ph-fill ph-envelope text-cyan-500"></i>
+                        <a href={`mailto:${personalInfo.email}`} className="contact-badge flex items-center gap-2 px-3 py-2 bg-white rounded border border-[var(--line)] active:border-[var(--line-strong)] text-sm text-[color:var(--text)] break-anywhere">
+                            <i className="ph-fill ph-envelope text-[color:var(--accent)]"></i>
                             <span>{personalInfo.email}</span>
                         </a>
-                        <div className="flex items-center gap-2 px-3 py-2 bg-slate-900 rounded border border-slate-700 text-sm text-slate-300">
-                            <i className="ph-fill ph-map-pin text-cyan-500"></i>
+                        <div className="contact-badge flex items-center gap-2 px-3 py-2 bg-white rounded border border-[var(--line)] text-sm text-[color:var(--text)]">
+                            <i className="ph-fill ph-map-pin text-[color:var(--accent)]"></i>
                             <span>Shenzhen, China</span>
                         </div>
                     </div>
@@ -401,12 +361,12 @@
                     {researchInterestsData.map(item => (
                         <div key={item.id} className="glass-panel p-4 rounded-xl">
                             <div className="flex items-center gap-3 mb-2">
-                                <div className="w-9 h-9 rounded-lg bg-cyan-500/10 flex items-center justify-center shrink-0">
-                                    <i className={`ph-fill ph-${item.icon} text-lg text-cyan-400`}></i>
+                                <div className="w-9 h-9 rounded-lg bg-[var(--tint)] flex items-center justify-center shrink-0">
+                                    <i className={`ph-fill ph-${item.icon} text-lg text-[color:var(--accent)]`}></i>
                                 </div>
-                                <h3 className="text-base font-bold text-white leading-tight">{item.title}</h3>
+                                <h3 className="text-base font-bold text-[color:var(--ink)] leading-tight">{item.title}</h3>
                             </div>
-                            <ul className="text-sm text-slate-400 leading-relaxed space-y-1.5 list-disc pl-5 marker:text-cyan-500">
+                            <ul className="text-sm text-[color:var(--muted)] leading-relaxed space-y-1.5 list-disc pl-5 marker:text-[color:var(--accent)]">
                                 {item.desc.map((p, idx) => <li key={idx}>{p}</li>)}
                             </ul>
                         </div>
@@ -425,12 +385,12 @@
             return (
                 <section id="publications" className="py-12 px-4">
                     <SectionHeader title="Publications" subtitle="RESEARCH OUTPUT" />
-                    <div className="flex flex-wrap gap-2 mb-5">
+                    <div className="publication-tabs flex flex-wrap gap-2 mb-5">
                         {tabs.map(t => (
                             <button
                                 key={t.key}
                                 onClick={() => setTab(t.key)}
-                                className={`px-3 py-1.5 rounded text-xs font-bold font-mono transition-colors ${tab === t.key ? 'bg-cyan-500 text-black' : 'bg-slate-800 text-slate-400 active:bg-slate-700'}`}
+                                className={`px-3 py-1.5 rounded text-xs font-bold font-mono transition-colors ${tab === t.key ? 'bg-[var(--accent)] text-white' : 'bg-[var(--soft)] text-[color:var(--muted)] active:bg-[var(--soft)]'}`}
                             >
                                 {t.label} ({t.count})
                             </button>
@@ -448,13 +408,13 @@
                             <div key={idx} className="glass-panel p-4 rounded-lg border-l-4 border-l-purple-500">
                                 <div className="flex gap-3 items-start">
                                     <div className="flex-1 min-w-0">
-                                        <h3 className="text-sm font-bold text-white mb-1.5 break-anywhere">{book.title}</h3>
-                                        <div className="text-xs text-purple-400 font-mono mb-1.5">{book.publisher}, {book.year}</div>
-                                        <p className="text-xs text-slate-400 break-anywhere" dangerouslySetInnerHTML={boldName(book.authors)}></p>
+                                        <h3 className="text-sm font-bold text-[color:var(--ink)] mb-1.5 break-anywhere">{book.title}</h3>
+                                        <div className="text-xs text-[#776089] font-mono mb-1.5">{book.publisher}, {book.year}</div>
+                                        <p className="text-xs text-[color:var(--muted)] break-anywhere" dangerouslySetInnerHTML={boldName(book.authors)}></p>
                                     </div>
                                     {book.cover && (
                                         <a href={book.url} target="_blank" rel="noreferrer" className="shrink-0">
-                                            <img src={book.cover} alt={book.title} className="w-16 rounded shadow-lg border border-white/10" />
+                                            <img src={book.cover} alt={book.title} className="w-16 rounded shadow-lg border border-[var(--line)]" />
                                         </a>
                                     )}
                                 </div>
@@ -463,7 +423,7 @@
                     </div>
 
                     <div className="mt-6 text-center">
-                        <a href="https://dblp.org/pid/81/6181.html" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs text-slate-400 active:text-cyan-400 border-b border-transparent">
+                        <a href="https://dblp.org/pid/81/6181.html" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs text-[color:var(--muted)] active:text-[color:var(--accent)] border-b border-transparent">
                             View Full List on DBLP <i className="ph-bold ph-arrow-up-right"></i>
                         </a>
                     </div>
@@ -474,16 +434,16 @@
         const PubCard = ({ pub }) => (
             <div className="glass-panel p-4 rounded-lg">
                 <div className="flex justify-between items-start gap-2 mb-1.5">
-                    <div className="text-xs font-mono text-cyan-400 break-anywhere">[{pub.id}] {pub.venue}, {pub.year}</div>
+                    <div className="text-xs font-mono text-[color:var(--accent)] break-anywhere">[{pub.id}] {pub.venue}, {pub.year}</div>
                     {pub.pdf && (
-                        <a href={pub.pdf} target="_blank" rel="noreferrer" className="shrink-0 p-1 text-slate-500 active:text-cyan-400" title="PDF">
+                        <a href={pub.pdf} target="_blank" rel="noreferrer" className="shrink-0 p-1 text-[color:var(--subtle)] active:text-[color:var(--accent)]" title="PDF">
                             <i className="ph-fill ph-file-pdf text-2xl"></i>
                         </a>
                     )}
                 </div>
-                <h3 className="text-sm font-bold text-white mb-1.5 leading-snug break-anywhere">{pub.title}</h3>
-                <p className="text-xs text-slate-400 break-anywhere" dangerouslySetInnerHTML={boldName(pub.authors)}></p>
-                {pub.award && <p className="text-xs text-yellow-500 mt-1.5 font-mono break-anywhere">{pub.award}</p>}
+                <h3 className="text-sm font-bold text-[color:var(--ink)] mb-1.5 leading-snug break-anywhere">{pub.title}</h3>
+                <p className="text-xs text-[color:var(--muted)] break-anywhere" dangerouslySetInnerHTML={boldName(pub.authors)}></p>
+                {pub.award && <p className="text-xs text-[#926b23] mt-1.5 font-mono break-anywhere">{pub.award}</p>}
             </div>
         );
 
@@ -494,15 +454,15 @@
                     {projectsData.map((proj, idx) => (
                         <div key={idx} className="glass-panel p-4 rounded-xl">
                             <div className="flex flex-wrap justify-between items-center gap-2 mb-2">
-                                <span className={`text-[11px] font-mono px-2 py-0.5 rounded ${proj.role === 'Principal Investigator' ? 'bg-cyan-500/20 text-cyan-300' : 'bg-purple-500/20 text-purple-300'}`}>
+                                <span className={`text-[11px] font-mono px-2 py-0.5 rounded ${proj.role === 'Principal Investigator' ? 'bg-[var(--tint)] text-[color:var(--accent)]' : 'bg-[#eee8f3] text-[#776089]'}`}>
                                     {proj.role}
                                 </span>
-                                <span className="text-xs text-slate-500 font-mono">{proj.period}</span>
+                                <span className="text-xs text-[color:var(--subtle)] font-mono">{proj.period}</span>
                             </div>
-                            <h3 className="text-sm font-bold text-white mb-1 leading-snug break-anywhere">{proj.title}</h3>
-                            <p className="text-xs text-slate-400 mb-0.5 break-anywhere"><span className="text-slate-500">Agency:</span> {proj.agency}</p>
-                            {proj.code && <p className="text-xs text-slate-500 font-mono mb-0.5 break-anywhere">Code: {proj.code}</p>}
-                            <p className="text-xs text-cyan-500 font-mono">{proj.amount}</p>
+                            <h3 className="text-sm font-bold text-[color:var(--ink)] mb-1 leading-snug break-anywhere">{proj.title}</h3>
+                            <p className="text-xs text-[color:var(--muted)] mb-0.5 break-anywhere"><span className="text-[color:var(--subtle)]">Agency:</span> {proj.agency}</p>
+                            {proj.code && <p className="text-xs text-[color:var(--subtle)] font-mono mb-0.5 break-anywhere">Code: {proj.code}</p>}
+                            <p className="text-xs text-[color:var(--accent)] font-mono">{proj.amount}</p>
                         </div>
                     ))}
                 </div>
@@ -514,18 +474,18 @@
                 <SectionHeader title="Patents" subtitle="INTELLECTUAL PROPERTY" />
                 <div className="space-y-3">
                     {patentsData.map((p, idx) => (
-                        <div key={idx} className="p-4 bg-slate-900/80 rounded border border-slate-800">
+                        <div key={idx} className="p-4 bg-white/80 rounded border border-[var(--line)]">
                             <div className="flex justify-between items-center gap-2 mb-2">
-                                <span className="bg-slate-950 px-2 py-1 rounded border border-white/5 font-mono text-[11px] text-cyan-500 break-anywhere">
+                                <span className="bg-white px-2 py-1 rounded border border-[var(--line)] font-mono text-[11px] text-[color:var(--accent)] break-anywhere">
                                     {p.id}
                                 </span>
-                                <a href={p.pdf} target="_blank" rel="noreferrer" className="shrink-0 text-slate-500 active:text-cyan-400" title="Patent">
+                                <a href={p.pdf} target="_blank" rel="noreferrer" className="shrink-0 text-[color:var(--subtle)] active:text-[color:var(--accent)]" title="Patent">
                                     <i className="ph-fill ph-file-pdf text-2xl"></i>
                                 </a>
                             </div>
-                            <h4 className="text-sm text-white font-bold leading-snug mb-1 break-anywhere">{p.title}</h4>
-                            <p className="text-xs text-slate-400 mb-1 break-anywhere" dangerouslySetInnerHTML={boldName(p.authors)}></p>
-                            <p className="text-[11px] text-slate-500 font-mono">{p.date}</p>
+                            <h4 className="text-sm text-[color:var(--ink)] font-bold leading-snug mb-1 break-anywhere">{p.title}</h4>
+                            <p className="text-xs text-[color:var(--muted)] mb-1 break-anywhere" dangerouslySetInnerHTML={boldName(p.authors)}></p>
+                            <p className="text-[11px] text-[color:var(--subtle)] font-mono">{p.date}</p>
                         </div>
                     ))}
                 </div>
@@ -535,14 +495,14 @@
         const Teaching = () => (
             <section id="teaching" className="py-12 px-4">
                 <SectionHeader title="Teaching" subtitle="KNOWLEDGE TRANSFER" />
-                <div className="bg-slate-950/80 p-4 rounded-xl border border-white/5 mb-4">
-                    <h4 className="text-cyan-400 font-mono text-xs mb-3 uppercase tracking-widest">Current</h4>
+                <div className="bg-white/80 p-4 rounded-xl border border-[var(--line)] mb-4">
+                    <h4 className="text-[color:var(--accent)] font-mono text-xs mb-3 uppercase tracking-widest">Current</h4>
                     <ul className="space-y-2.5">
                         {teachingData.current.map((c, i) => <CourseItem key={i} {...c} />)}
                     </ul>
                 </div>
-                <div className="bg-slate-950/80 p-4 rounded-xl border border-white/5">
-                    <h4 className="text-slate-500 font-mono text-xs mb-3 uppercase tracking-widest">Past</h4>
+                <div className="bg-white/80 p-4 rounded-xl border border-[var(--line)]">
+                    <h4 className="text-[color:var(--subtle)] font-mono text-xs mb-3 uppercase tracking-widest">Past</h4>
                     <ul className="space-y-2.5">
                         {teachingData.past.map((c, i) => <CourseItem key={i} {...c} />)}
                     </ul>
@@ -551,17 +511,17 @@
         );
 
         const CourseItem = ({ name, year, href }) => (
-            <li className="flex justify-between items-start gap-3 border-b border-white/5 pb-2 last:border-0 last:pb-0">
+            <li className="flex justify-between items-start gap-3 border-b border-[var(--line)] pb-2 last:border-0 last:pb-0">
                 <div className="flex flex-wrap items-center gap-2 flex-1 min-w-0">
-                    <span className="text-slate-300 text-sm break-anywhere">{name}</span>
+                    <span className="text-[color:var(--text)] text-sm break-anywhere">{name}</span>
                     {href && (
-                        <a href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[11px] font-mono bg-cyan-500/10 text-cyan-400 border-cyan-500/30 active:bg-cyan-500/20">
+                        <a href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[11px] font-mono bg-[var(--tint)] text-[color:var(--accent)] border-[var(--line-strong)] active:bg-[var(--tint)]">
                             <i className="ph-bold ph-arrow-up-right" style={{fontSize: 10}}></i>
                             课程资料
                         </a>
                     )}
                 </div>
-                <span className="font-mono text-slate-500 text-xs whitespace-nowrap pt-0.5">{year}</span>
+                <span className="font-mono text-[color:var(--subtle)] text-xs whitespace-nowrap pt-0.5">{year}</span>
             </li>
         );
 
@@ -575,25 +535,25 @@
             return (
                 <section id="team" className="py-12 px-4">
                     <SectionHeader title="Research Team" subtitle="STUDENTS & ALUMNI" />
-                    <div className="flex flex-wrap gap-2 mb-5">
+                    <div className="publication-tabs flex flex-wrap gap-2 mb-5">
                         {tabs.map(t => (
                             <button
                                 key={t.key}
                                 onClick={() => setTab(t.key)}
-                                className={`px-3 py-1.5 rounded text-xs font-bold font-mono transition-colors ${tab === t.key ? 'bg-cyan-500 text-black' : 'bg-slate-800 text-slate-400 active:bg-slate-700'}`}
+                                className={`px-3 py-1.5 rounded text-xs font-bold font-mono transition-colors ${tab === t.key ? 'bg-[var(--accent)] text-white' : 'bg-[var(--soft)] text-[color:var(--muted)] active:bg-[var(--soft)]'}`}
                             >
                                 {t.label} ({t.count})
                             </button>
                         ))}
                     </div>
 
-                    <div className="bg-slate-950/80 p-4 rounded-xl border border-white/5">
+                    <div className="bg-white/80 p-4 rounded-xl border border-[var(--line)]">
                         {tab !== 'alumni' && (
                             <div className="space-y-2.5">
                                 {studentData[tab].map((stu, i) => (
-                                    <div key={i} className="flex justify-between items-center gap-2 border-b border-white/5 pb-2 last:border-0 last:pb-0">
-                                        <span className="text-slate-300 text-sm break-anywhere">{stu.name}</span>
-                                        <span className="font-mono text-[11px] text-slate-500 bg-slate-900 px-2 py-0.5 rounded whitespace-nowrap">{stu.year}</span>
+                                    <div key={i} className="flex justify-between items-center gap-2 border-b border-[var(--line)] pb-2 last:border-0 last:pb-0">
+                                        <span className="text-[color:var(--text)] text-sm break-anywhere">{stu.name}</span>
+                                        <span className="font-mono text-[11px] text-[color:var(--subtle)] bg-white px-2 py-0.5 rounded whitespace-nowrap">{stu.year}</span>
                                     </div>
                                 ))}
                             </div>
@@ -601,20 +561,20 @@
                         {tab === 'alumni' && (
                             <div className="space-y-3">
                                 {studentData.alumni.map((stu, i) => (
-                                    <div key={i} className="p-3 rounded bg-slate-900/50 border border-white/5">
+                                    <div key={i} className="p-3 rounded bg-white/50 border border-[var(--line)]">
                                         <div className="flex justify-between items-start gap-2 mb-1">
                                             <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                                                <span className="text-slate-300 text-sm">{stu.name}</span>
-                                                <span className="text-[10px] bg-slate-800 text-slate-400 px-1 rounded">Master</span>
+                                                <span className="text-[color:var(--text)] text-sm">{stu.name}</span>
+                                                <span className="text-[10px] bg-[var(--soft)] text-[color:var(--muted)] px-1 rounded">Master</span>
                                                 {stu.honor && (
-                                                    <span className="text-[10px] bg-yellow-500/10 text-yellow-500 px-1 rounded border border-yellow-500/20 flex items-center gap-1">
+                                                    <span className="text-[10px] bg-[#f6efd9] text-[#926b23] px-1 rounded border border-[#e4d5a6] flex items-center gap-1">
                                                         <i className="ph-fill ph-medal"></i> {stu.honor}
                                                     </span>
                                                 )}
                                             </div>
-                                            <span className="text-[11px] font-mono text-slate-500 whitespace-nowrap pt-0.5">{stu.year}</span>
+                                            <span className="text-[11px] font-mono text-[color:var(--subtle)] whitespace-nowrap pt-0.5">{stu.year}</span>
                                         </div>
-                                        <span className="text-cyan-500 text-xs flex items-center gap-1 break-anywhere">
+                                        <span className="text-[color:var(--accent)] text-xs flex items-center gap-1 break-anywhere">
                                             <i className="ph-bold ph-caret-right" style={{fontSize: 10}}></i> {stu.dest}
                                         </span>
                                     </div>
@@ -627,13 +587,13 @@
         };
 
         const Timeline = ({ items }) => (
-            <div className="space-y-5 pl-4 border-l-2 border-slate-800">
+            <div className="space-y-5 pl-4 border-l-2 border-[var(--line)]">
                 {items.map((it, i) => (
                     <div key={i} className="relative">
-                        <div className="absolute -left-[21px] top-1.5 w-3 h-3 bg-slate-950 border-2 border-cyan-500 rounded-full"></div>
-                        <span className="block font-mono text-cyan-500 text-xs mb-0.5">{it.year}</span>
-                        <h4 className="text-white font-bold text-sm break-anywhere">{it.title}</h4>
-                        <p className="text-slate-400 text-xs break-anywhere">{it.org}</p>
+                        <div className="absolute -left-[21px] top-1.5 w-3 h-3 bg-white border-2 border-[var(--line-strong)] rounded-full"></div>
+                        <span className="block font-mono text-[color:var(--accent)] text-xs mb-0.5">{it.year}</span>
+                        <h4 className="text-[color:var(--ink)] font-bold text-sm break-anywhere">{it.title}</h4>
+                        <p className="text-[color:var(--muted)] text-xs break-anywhere">{it.org}</p>
                     </div>
                 ))}
             </div>
@@ -645,41 +605,41 @@
 
                 <div className="space-y-8">
                     <div>
-                        <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-                            <i className="ph-fill ph-graduation-cap text-cyan-400"></i> Education
+                        <h3 className="text-base font-bold text-[color:var(--ink)] mb-4 flex items-center gap-2">
+                            <i className="ph-fill ph-graduation-cap text-[color:var(--accent)]"></i> Education
                         </h3>
                         <Timeline items={educationData} />
                     </div>
 
                     <div>
-                        <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-                            <i className="ph-fill ph-briefcase text-cyan-400"></i> Academic Positions
+                        <h3 className="text-base font-bold text-[color:var(--ink)] mb-4 flex items-center gap-2">
+                            <i className="ph-fill ph-briefcase text-[color:var(--accent)]"></i> Academic Positions
                         </h3>
                         <Timeline items={positionsData} />
                     </div>
 
                     <div>
-                        <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-                            <i className="ph-fill ph-share-network text-cyan-400"></i> Joint Appointments
+                        <h3 className="text-base font-bold text-[color:var(--ink)] mb-4 flex items-center gap-2">
+                            <i className="ph-fill ph-share-network text-[color:var(--accent)]"></i> Joint Appointments
                         </h3>
                         <Timeline items={jointData} />
                     </div>
 
                     <div>
-                        <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-                            <i className="ph-fill ph-pen-nib text-cyan-400"></i> Professional Activities
+                        <h3 className="text-base font-bold text-[color:var(--ink)] mb-4 flex items-center gap-2">
+                            <i className="ph-fill ph-pen-nib text-[color:var(--accent)]"></i> Professional Activities
                         </h3>
-                        <div className="bg-slate-950/80 p-4 rounded border border-white/5 space-y-3">
+                        <div className="bg-white/80 p-4 rounded border border-[var(--line)] space-y-3">
                             {activitiesData.map((a, i) => (
                                 <div key={i} className="flex gap-3 items-start">
-                                    <span className="font-mono text-cyan-500 text-xs w-10 pt-0.5 shrink-0">{a.year}</span>
-                                    <div className="border-l border-slate-700 pl-3 flex-1 space-y-1.5">
+                                    <span className="font-mono text-[color:var(--accent)] text-xs w-10 pt-0.5 shrink-0">{a.year}</span>
+                                    <div className="border-l border-[var(--line)] pl-3 flex-1 space-y-1.5">
                                         {a.items.map((act, j) => (
                                             <div key={j} className="flex flex-wrap items-center gap-2">
-                                                <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border whitespace-nowrap ${act.type === 'chair' ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/30' : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30'}`}>
+                                                <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border whitespace-nowrap ${act.type === 'chair' ? 'bg-[#f6efd9] text-[#926b23] border-[#e4d5a6]' : 'bg-[var(--tint)] text-[color:var(--accent)] border-[var(--line-strong)]'}`}>
                                                     {act.label}
                                                 </span>
-                                                <span className="text-slate-300 text-xs break-anywhere">{act.venues}</span>
+                                                <span className="text-[color:var(--text)] text-xs break-anywhere">{act.venues}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -689,17 +649,17 @@
                     </div>
 
                     <div>
-                        <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-                            <i className="ph-fill ph-trophy text-yellow-500"></i> Honors & Awards
+                        <h3 className="text-base font-bold text-[color:var(--ink)] mb-4 flex items-center gap-2">
+                            <i className="ph-fill ph-trophy text-[#926b23]"></i> Honors & Awards
                         </h3>
                         <div className="space-y-3">
                             {honorsData.map((h, i) => (
-                                <div key={i} className="p-3 bg-slate-800/50 rounded border border-white/5">
+                                <div key={i} className="p-3 bg-[var(--soft)] rounded border border-[var(--line)]">
                                     <div className="flex justify-between items-start gap-2 mb-1">
-                                        <p className="text-white font-bold text-sm break-anywhere">{h.title}</p>
-                                        <span className="text-xs font-mono text-yellow-500 whitespace-nowrap">{h.year}</span>
+                                        <p className="text-[color:var(--ink)] font-bold text-sm break-anywhere">{h.title}</p>
+                                        <span className="text-xs font-mono text-[#926b23] whitespace-nowrap">{h.year}</span>
                                     </div>
-                                    <p className="text-xs text-slate-400 break-anywhere">{h.desc}</p>
+                                    <p className="text-xs text-[color:var(--muted)] break-anywhere">{h.desc}</p>
                                 </div>
                             ))}
                         </div>
@@ -709,23 +669,23 @@
         );
 
         const Footer = () => (
-            <footer className="py-10 px-4 border-t border-white/5 bg-black/40 backdrop-blur-md text-center">
-                <h2 className="text-xl font-bold text-white mb-5">Get in Touch</h2>
+            <footer className="py-10 px-4 border-t border-[var(--line)] bg-[var(--soft)] backdrop-blur-md text-center">
+                <h2 className="text-xl font-bold text-[color:var(--ink)] mb-5">Get in Touch</h2>
                 <div className="flex justify-center mb-5">
-                    <a href={`mailto:${personalInfo.email2}`} className="flex items-center gap-2 text-slate-300 text-sm break-anywhere">
-                        <i className="ph-fill ph-envelope text-cyan-500"></i>
+                    <a href={`mailto:${personalInfo.email2}`} className="flex items-center gap-2 text-[color:var(--text)] text-sm break-anywhere">
+                        <i className="ph-fill ph-envelope text-[color:var(--accent)]"></i>
                         {personalInfo.email2}
                     </a>
                 </div>
-                <div className="flex items-start justify-center gap-2 text-slate-500 text-xs mb-5 break-anywhere">
-                    <i className="ph-fill ph-map-pin text-cyan-500 mt-0.5 shrink-0"></i>
+                <div className="flex items-start justify-center gap-2 text-[color:var(--subtle)] text-xs mb-5 break-anywhere">
+                    <i className="ph-fill ph-map-pin text-[color:var(--accent)] mt-0.5 shrink-0"></i>
                     <span>{personalInfo.address}</span>
                 </div>
-                <p className="text-[11px] text-slate-600 font-mono mb-3">
+                <p className="text-[11px] text-[color:var(--subtle)] font-mono mb-3">
                     © {new Date().getFullYear()} Dingming Wu. All Rights Reserved.<br/>
                     Designed with AI.
                 </p>
-                <a href="index.html?desktop=1" className="inline-flex items-center gap-1.5 text-xs text-slate-500 active:text-cyan-400">
+                <a href="index.html?desktop=1" className="inline-flex items-center gap-1.5 text-xs text-[color:var(--subtle)] active:text-[color:var(--accent)]">
                     <i className="ph-bold ph-desktop"></i> View Desktop Version
                 </a>
             </footer>
@@ -733,22 +693,38 @@
 
         const App = () => {
             const [menuOpen, setMenuOpen] = useState(false);
+            const [scrolled, setScrolled] = useState(false);
+
+            useEffect(() => {
+                const handleScroll = () => setScrolled(window.scrollY > 50);
+                handleScroll();
+                window.addEventListener('scroll', handleScroll, { passive: true });
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
 
             const scrollTo = (id) => {
                 setMenuOpen(false);
                 setTimeout(() => {
                     const el = document.getElementById(id);
                     if (el) {
-                        const y = el.getBoundingClientRect().top + window.scrollY - 56;
-                        window.scrollTo({ top: y, behavior: 'smooth' });
+                        const y = el.getBoundingClientRect().top + window.scrollY - 88;
+                        window.scrollTo({ top: y, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
                     }
                 }, 50);
             };
 
             return (
-                <div className="min-h-screen selection:bg-cyan-500/30 selection:text-cyan-200">
+                <div className="min-h-screen selection:bg-[var(--tint)] selection:text-[color:var(--accent)]">
                     <TopBar open={menuOpen} setOpen={setMenuOpen} />
                     <MobileMenu open={menuOpen} onSelect={scrollTo} />
+                    {!scrolled && !menuOpen && (
+                        <button type="button" className="scroll-indicator" aria-label="Scroll down to research interests" onClick={() => scrollTo('research')}>
+                            <span>Scroll down</span>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M12 4v16m-6-6 6 6 6-6" />
+                            </svg>
+                        </button>
+                    )}
                     <Hero />
                     <Research />
                     <Publications />
