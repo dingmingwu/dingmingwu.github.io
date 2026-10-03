@@ -51,23 +51,25 @@
         };
 
         const researchInterestsData = [
-            { id: 1, title: "Large Graph Analytics", icon: "graph", desc: [
-                    "How to apply approximation techniques to classical graph algorithms for large, dynamic datasets.",
-                    "How to learn scalable embeddings for large graphs that preserve semantic relationships and topological properties.",
-                    "How to optimize mining and querying in knowledge graphs."
-                ] },
-            { id: 2, title: "Spatio-Temporal & Geo-Social Intelligence", icon: "globe", desc: [
-                    "How to mine dense blocks in spatiotemporal tensors for large-scale data analysis and pattern extraction.",
-                    "How to integrate spatio-temporal data with geo-social interactions to generate real-time, context-aware recommendations.",
-                    "How to efficiently query large spatio-temporal datasets."
+            { id: 5, title: "Clustering Agent", icon: "circles-three", summary: "Develop an intelligent agent that automates clustering across diverse data types, including vectors, trajectories, time series, texts, images, graphs, and more.", desc: [
+                    "How to automatically select suitable clustering algorithms based on data characteristics and task requirements.",
+                    "How to determine clustering parameters, such as the number of clusters and density thresholds, without labeled data.",
+                    "How to combine results from multiple algorithms and parameter settings into robust, consistent consensus clusters."
             ] },
-            { id: 3, title: "Machine Learning in Business and Manufacturing", icon: "factory", desc: [
-                    "Develop foundation models for market analysis, client prediction, and strategic planning.",
-                    "Develop foundation models for smart manufacturing."
+            { id: 6, title: "Contextual Intelligence", icon: "chats-circle", summary: "Enable robots to communicate naturally with humans by understanding situational context and coordinating language, tone of voice, facial expressions, and gestures.", desc: [
+                    "How to model human-robot communication using shared goals, dialogue history, situational context, and multimodal cues to understand human intentions.",
+                    "How to generate context-appropriate content and tone, coordinate speech with facial expressions and gestures, and manage turn-taking and clarification.",
+                    "How to adapt communication to individual preferences, cultural norms, and accessibility needs, and improve mutual understanding and collaboration through feedback."
             ] },
-            { id: 4, title: "Medical Image Analysis", icon: "brain", desc: [
-                    "Develop foundation models for 3D MRI image segmentation.",
-                    "Develop foundation models for 3D MRI image in-painting."
+            { id: 1, title: "Large Graph Analytics", icon: "graph", summary: "Develop accurate and scalable algorithms for analyzing large, evolving graphs and understanding how information and influence spread through social networks.", desc: [
+                    "How to develop efficient approximation algorithms for PageRank, triangle counting, and general motif counting, with provable error guarantees and tunable trade-offs between accuracy, runtime, and memory.",
+                    "How to maintain accurate graph analytics as nodes and edges change, using sampling, compact summaries, and incremental computation to process massive and streaming graphs.",
+                    "How to efficiently estimate susceptibility to influence and model information diffusion in large social networks, accounting for network structure, temporal interactions, and uncertainty in propagation."
+            ] },
+            { id: 7, title: "Fashion Intelligence", icon: "t-shirt", summary: "Make personalized fashion accessible to everyone by connecting innovative design with everyday wearability and garments tailored to individual measurements.", desc: [
+                    "How to recommend and generate clothing suited to individual body shapes, style preferences, daily activities, and comfort needs.",
+                    "How to translate avant-garde and runway designs into practical everyday garments while preserving their creative identity and balancing comfort, affordability, and manufacturability.",
+                    "How to generate production-ready sewing patterns from garment designs and individual measurements, accounting for fabric properties, fit, seam allowances, and assembly constraints."
             ] }
         ];
 
@@ -253,6 +255,7 @@
                                     </div>
                                     <h3 className="text-lg font-bold text-[color:var(--ink)] leading-tight">{item.title}</h3>
                                 </div>
+                                {item.summary && <p className="text-base text-[color:var(--muted)] leading-relaxed mb-3">{item.summary}</p>}
                                 <ul className="text-base text-[color:var(--muted)] leading-relaxed text-justify space-y-2 list-disc pl-4 marker:text-[color:var(--accent)]">
                                     {item.desc.map((point, idx) => (
                                         <li key={idx}>{point}</li>
@@ -467,8 +470,7 @@
                                     </p>
                                     
                                     <div className="text-base text-[color:var(--muted)] max-w-2xl leading-relaxed">
-                                        Advancing the frontiers of Machine Learning, Large Graph Analytics, and Spatio-Temporal Intelligence. 
-                                        Focusing on challenges in manufacturing, business, and healthcare.
+                                        My research spans data intelligence and human-centered AI. I develop algorithms and intelligent systems for automated clustering, scalable graph analytics, natural human-robot communication, and personalized fashion.
                                     </div>
 
                                     <div className="flex flex-wrap gap-4 pt-4">
